@@ -113,41 +113,69 @@ TEXT_COLOR = "white"
 def apply_chart_theme(fig):
 
     fig.update_layout(
-        paper_bgcolor=PAPER_BACKGROUND,
-        plot_bgcolor=CHART_BACKGROUND,
+        paper_bgcolor="#D9DDE3",
+        plot_bgcolor="#4B5563",
+
         font=dict(
-            color=TEXT_COLOR,
+            color="#FFFFFF",
             size=13
         ),
+
         title_font=dict(
-            color=TEXT_COLOR,
+            color="#FFFFFF",
             size=18
         ),
+
         xaxis=dict(
-            title_font=dict(color=TEXT_COLOR),
-            tickfont=dict(color=TEXT_COLOR),
+            title_font=dict(
+                color="#FFFFFF"
+            ),
+
+            tickfont=dict(
+                color="#E5E7EB"
+            ),
+
             gridcolor="#6B7280",
-            linecolor="#9CA3AF"
+            linecolor="#9CA3AF",
+            zerolinecolor="#9CA3AF"
         ),
+
         yaxis=dict(
-            title_font=dict(color=TEXT_COLOR),
-            tickfont=dict(color=TEXT_COLOR),
+            title_font=dict(
+                color="#FFFFFF"
+            ),
+
+            tickfont=dict(
+                color="#E5E7EB"
+            ),
+
             gridcolor="#6B7280",
-            linecolor="#9CA3AF"
+            linecolor="#9CA3AF",
+            zerolinecolor="#9CA3AF"
         ),
+
         legend=dict(
-            font=dict(color=TEXT_COLOR)
+            font=dict(
+                color="#FFFFFF"
+            )
         ),
+
+        hoverlabel=dict(
+            bgcolor="#FFFFFF",
+            font=dict(
+                color="#111827"
+            )
+        ),
+
         margin=dict(
-            l=50,
+            l=60,
             r=30,
             t=60,
-            b=50
+            b=60
         )
     )
 
     return fig
-
 
 # ============================================================
 # SIDEBAR
