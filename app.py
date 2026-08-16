@@ -1,6 +1,4 @@
-from pathlib import Path
-
-app_code = r'''import os
+import os
 import joblib
 import pandas as pd
 import streamlit as st
