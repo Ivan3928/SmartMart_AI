@@ -3,10 +3,28 @@ import joblib
 import pandas as pd
 import streamlit as st
 
+# CURRENCY SETTINGS
+currency = st.sidebar.selectbox(
+    "💱 Select Currency",
+    ["INR (₹)", "USD ($)", "EUR (€)"]
+)
 
-# ==========================================
-# PAGE CONFIGURATION
-# ==========================================
+currency_rates = {
+    "INR (₹)": 1.0,
+    "USD ($)": 0.0117,
+    "EUR (€)": 0.0100
+}
+
+currency_symbols = {
+    "INR (₹)": "₹",
+    "USD ($)": "$",
+    "EUR (€)": "€"
+}
+
+rate = currency_rates[currency]
+symbol = currency_symbols[currency]
+
+#PAGE CONFIGURATION
 
 st.set_page_config(
     page_title="SmartMart Resource Manager",
@@ -15,9 +33,7 @@ st.set_page_config(
 )
 
 
-# ==========================================
 # PROJECT PATHS
-# ==========================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -53,25 +69,18 @@ def load_data():
 @st.cache_resource
 def load_models():
 
-    electricity_model = joblib.load(
-        ELECTRICITY_MODEL_FILE
-    )
+    electricity_model = joblib.load( ELECTRICITY_MODEL_FILE )
 
-    water_model = joblib.load(
-        WATER_MODEL_FILE
-    )
+    water_model = joblib.load( WATER_MODEL_FILE )
 
     return electricity_model, water_model
-
 
 df = load_data()
 
 electricity_model, water_model = load_models()
 
 
-# ==========================================
 # TITLE
-# ==========================================
 
 st.title("🏪 SmartMart Resource & Financial Management System")
 
@@ -118,13 +127,13 @@ if page == "Dashboard":
     with col1:
         st.metric(
             "Revenue",
-            f"₹{latest['revenue']:,.0f}"
+            f"{symbol}{latest['revenue'] * rate:,.0f}"
         )
 
     with col2:
         st.metric(
             "Net Profit",
-            f"₹{latest['net_profit']:,.0f}"
+            f"{symbol}{latest['net_profit'] * rate:,.0f}"
         )
 
     with col3:
@@ -136,7 +145,7 @@ if page == "Dashboard":
     with col4:
         st.metric(
             "Resource Cost",
-            f"₹{latest['total_resource_cost']:,.0f}"
+            f"{symbol}{latest['total_resource_cost'] * rate:,.0f}"
         )
 
     st.subheader("Revenue Trend")
@@ -222,9 +231,7 @@ elif page == "Resource Consumption":
     st.line_chart(waste_chart)
 
 
-# ==========================================
 # FINANCIAL ANALYSIS
-# ==========================================
 
 elif page == "Financial Analysis":
 
@@ -238,21 +245,21 @@ elif page == "Financial Analysis":
 
         st.metric(
             "Revenue",
-            f"₹{latest['revenue']:,.0f}"
+            f"{symbol}{latest['revenue'] * rate:,.0f}"
         )
 
     with col2:
 
         st.metric(
             "Operating Profit",
-            f"₹{latest['operating_profit']:,.0f}"
+            f"{symbol}{latest['operating_profit'] * rate:,.0f}"
         )
 
     with col3:
 
         st.metric(
             "Net Profit",
-            f"₹{latest['net_profit']:,.0f}"
+            f"{symbol}{latest['net_profit'] * rate:,.0f}"
         )
 
     st.subheader("Revenue vs Net Profit")
@@ -298,9 +305,8 @@ elif page == "Financial Analysis":
     )
 
 
-# ==========================================
+
 # BALANCE SHEET
-# ==========================================
 
 elif page == "Balance Sheet":
 
@@ -338,7 +344,7 @@ elif page == "Balance Sheet":
 
     st.metric(
         "Total Assets",
-        f"₹{total_assets:,.0f}"
+         f"{symbol}{total_assets * rate:,.0f}"
     )
 
     st.subheader("Liabilities")
@@ -361,14 +367,14 @@ elif page == "Balance Sheet":
 
     st.metric(
         "Total Liabilities",
-        f"₹{latest['total_liabilities']:,.0f}"
+        f"{symbol}{latest['total_liabilities'] * rate:,.0f}"
     )
 
     st.subheader("Equity")
 
     st.metric(
         "Total Equity",
-        f"₹{latest['total_equity']:,.0f}"
+        f"{symbol}{latest['total_equity'] * rate:,.0f}"
     )
 
     st.divider()
@@ -385,14 +391,14 @@ elif page == "Balance Sheet":
 
         st.metric(
             "Assets",
-            f"₹{latest['total_assets']:,.0f}"
+            f"{symbol}{latest['total_assets'] * rate:,.0f}"
         )
 
     with right:
 
         st.metric(
             "Liabilities + Equity",
-            f"₹{latest['total_liabilities'] + latest['total_equity']:,.0f}"
+            f"{symbol}{(latest['total_liabilities'] + latest['total_equity']) * rate:,.0f}"
         )
 
     st.success(
@@ -400,9 +406,8 @@ elif page == "Balance Sheet":
     )
 
 
-# ==========================================
 # AI PREDICTIONS
-# ==========================================
+
 
 elif page == "AI Predictions":
 
