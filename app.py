@@ -2,22 +2,24 @@ import os
 import joblib
 import pandas as pd
 import streamlit as st
+import plotly.express as px
 
 
-# ==========================================
+# ============================================================
 # PAGE CONFIGURATION
-# ==========================================
+# ============================================================
 
 st.set_page_config(
     page_title="SmartMart Resource Manager",
     page_icon="🏪",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 
-# ==========================================
+# ============================================================
 # PROJECT PATHS
-# ==========================================
+# ============================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -41,13 +43,18 @@ WATER_MODEL_FILE = os.path.join(
 )
 
 
-# ==========================================
+# ============================================================
 # LOAD DATA
-# ==========================================
+# ============================================================
 
 @st.cache_data
 def load_data():
-    return pd.read_csv(DATA_FILE)
+    data = pd.read_csv(DATA_FILE)
+
+    if "date" in data.columns:
+        data["date"] = pd.to_datetime(data["date"])
+
+    return data
 
 
 @st.cache_resource
@@ -68,12 +75,197 @@ df = load_data()
 
 electricity_model, water_model = load_models()
 
+latest = df.iloc[-1]
 
-# ==========================================
+
+# ============================================================
+# CURRENCY
+# ============================================================
+
+st.sidebar.title("🏪 SmartMart")
+
+currency = st.sidebar.selectbox(
+    "Display Currency",
+    [
+        "INR (₹)",
+        "USD ($)",
+        "EUR (€)"
+    ]
+)
+
+currency_rates = {
+    "INR (₹)": 1.00,
+    "USD ($)": 0.0117,
+    "EUR (€)": 0.0100
+}
+
+currency_symbols = {
+    "INR (₹)": "₹",
+    "USD ($)": "$",
+    "EUR (€)": "€"
+}
+
+rate = currency_rates[currency]
+symbol = currency_symbols[currency]
+
+
+def money(value):
+    return f"{symbol}{float(value) * rate:,.0f}"
+
+
+# ============================================================
+# PROFESSIONAL UI STYLE
+# ============================================================
+
+st.markdown(
+    """
+    <style>
+
+    /* Main application background */
+    [data-testid="stAppViewContainer"] {
+        background-color: #F3F4F6;
+    }
+
+    [data-testid="stHeader"] {
+        background-color: #F3F4F6;
+    }
+
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+
+    /* Headings */
+    h1, h2, h3, h4 {
+        color: #111827 !important;
+    }
+
+    /* Normal text */
+    p, label {
+        color: #1F2937 !important;
+    }
+
+    /* Metric cards */
+    [data-testid="stMetric"] {
+        background-color: #FFFFFF;
+        border: 1px solid #D1D5DB;
+        border-radius: 12px;
+        padding: 15px;
+    }
+
+    [data-testid="stMetricLabel"] {
+        color: #4B5563 !important;
+    }
+
+    [data-testid="stMetricValue"] {
+        color: #111827 !important;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
+# ============================================================
+# PLOTLY THEME
+# ============================================================
+
+def apply_chart_theme(fig):
+
+    fig.update_layout(
+
+        # Light chart backgrounds
+        paper_bgcolor="#F3F4F6",
+        plot_bgcolor="#E5E7EB",
+
+        # Main text
+        font=dict(
+            family="Arial",
+            color="#111827",
+            size=13
+        ),
+
+        # Chart title
+        title=dict(
+            font=dict(
+                family="Arial",
+                color="#111827",
+                size=19
+            ),
+            x=0.02,
+            xanchor="left"
+        ),
+
+        # X axis
+        xaxis=dict(
+            title_font=dict(
+                color="#111827",
+                size=14
+            ),
+            tickfont=dict(
+                color="#111827",
+                size=12
+            ),
+            gridcolor="#B8BEC8",
+            linecolor="#6B7280",
+            showline=True
+        ),
+
+        # Y axis
+        yaxis=dict(
+            title_font=dict(
+                color="#111827",
+                size=14
+            ),
+            tickfont=dict(
+                color="#111827",
+                size=12
+            ),
+            gridcolor="#B8BEC8",
+            linecolor="#6B7280",
+            showline=True
+        ),
+
+        # Legend
+        legend=dict(
+            font=dict(
+                color="#111827",
+                size=12
+            ),
+            bgcolor="rgba(255,255,255,0.85)",
+            bordercolor="#9CA3AF",
+            borderwidth=1
+        ),
+
+        # Hover box
+        hoverlabel=dict(
+            bgcolor="#FFFFFF",
+            bordercolor="#6B7280",
+            font=dict(
+                color="#111827",
+                size=12
+            )
+        ),
+
+        margin=dict(
+            l=70,
+            r=30,
+            t=70,
+            b=60
+        )
+    )
+
+    return fig
+
+
+# ============================================================
 # TITLE
-# ==========================================
+# ============================================================
 
-st.title("🏪 SmartMart Resource & Financial Management System")
+st.title(
+    "🏪 SmartMart Resource & Financial Management System"
+)
 
 st.write(
     """
@@ -84,11 +276,11 @@ st.write(
 )
 
 
-# ==========================================
-# SIDEBAR
-# ==========================================
+# ============================================================
+# SIDEBAR NAVIGATION
+# ============================================================
 
-st.sidebar.title("Navigation")
+st.sidebar.divider()
 
 page = st.sidebar.radio(
     "Select Section",
@@ -103,28 +295,26 @@ page = st.sidebar.radio(
 )
 
 
-# ==========================================
+# ============================================================
 # DASHBOARD
-# ==========================================
+# ============================================================
 
 if page == "Dashboard":
 
     st.header("📊 Business Dashboard")
-
-    latest = df.iloc[-1]
 
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.metric(
             "Revenue",
-            f"₹{latest['revenue']:,.0f}"
+            money(latest["revenue"])
         )
 
     with col2:
         st.metric(
             "Net Profit",
-            f"₹{latest['net_profit']:,.0f}"
+            money(latest["net_profit"])
         )
 
     with col3:
@@ -136,37 +326,73 @@ if page == "Dashboard":
     with col4:
         st.metric(
             "Resource Cost",
-            f"₹{latest['total_resource_cost']:,.0f}"
+            money(latest["total_resource_cost"])
         )
 
-    st.subheader("Revenue Trend")
+    st.write("")
 
-    revenue_chart = df.set_index("date")[
-        ["revenue"]
-    ]
+    # Revenue
+    st.subheader("📈 Revenue Trend")
 
-    st.line_chart(revenue_chart)
+    fig = px.line(
+        df,
+        x="date",
+        y="revenue",
+        title="Revenue Trend",
+        markers=True
+    )
 
-    st.subheader("Net Profit Trend")
+    fig.update_yaxes(
+        title="Revenue",
+        tickprefix=symbol
+    )
 
-    profit_chart = df.set_index("date")[
-        ["net_profit"]
-    ]
+    fig.update_traces(
+        line=dict(width=3),
+        marker=dict(size=7)
+    )
 
-    st.line_chart(profit_chart)
+    st.plotly_chart(
+        apply_chart_theme(fig),
+        use_container_width=True
+    )
+
+    # Profit
+    st.subheader("📈 Net Profit Trend")
+
+    fig = px.line(
+        df,
+        x="date",
+        y="net_profit",
+        title="Net Profit Trend",
+        markers=True
+    )
+
+    fig.update_yaxes(
+        title="Net Profit",
+        tickprefix=symbol
+    )
+
+    fig.update_traces(
+        line=dict(width=3),
+        marker=dict(size=7)
+    )
+
+    st.plotly_chart(
+        apply_chart_theme(fig),
+        use_container_width=True
+    )
 
 
-# ==========================================
+# ============================================================
 # RESOURCE CONSUMPTION
-# ==========================================
+# ============================================================
 
 elif page == "Resource Consumption":
 
     st.header("⚡ Resource Consumption")
 
-    latest = df.iloc[-1]
-
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
 
@@ -189,48 +415,121 @@ elif page == "Resource Consumption":
             f"{latest['fuel_liters']:,.0f} L"
         )
 
-    st.subheader("Electricity Consumption")
+    with col4:
 
-    electricity_chart = df.set_index("date")[
-        ["electricity_kwh"]
-    ]
+        st.metric(
+            "Waste",
+            f"{latest['waste_kg']:,.0f} kg"
+        )
 
-    st.line_chart(electricity_chart)
+    # Electricity
+    st.subheader("⚡ Electricity Consumption")
 
-    st.subheader("Water Consumption")
+    fig = px.line(
+        df,
+        x="date",
+        y="electricity_kwh",
+        title="Electricity Consumption",
+        markers=True
+    )
 
-    water_chart = df.set_index("date")[
-        ["water_m3"]
-    ]
+    fig.update_yaxes(
+        title="Electricity (kWh)"
+    )
 
-    st.line_chart(water_chart)
+    fig.update_traces(
+        line=dict(width=3),
+        marker=dict(size=7)
+    )
 
-    st.subheader("Fuel Consumption")
+    st.plotly_chart(
+        apply_chart_theme(fig),
+        use_container_width=True
+    )
 
-    fuel_chart = df.set_index("date")[
-        ["fuel_liters"]
-    ]
+    # Water
+    st.subheader("💧 Water Consumption")
 
-    st.line_chart(fuel_chart)
+    fig = px.line(
+        df,
+        x="date",
+        y="water_m3",
+        title="Water Consumption",
+        markers=True
+    )
 
-    st.subheader("Waste Generation")
+    fig.update_yaxes(
+        title="Water (m³)"
+    )
 
-    waste_chart = df.set_index("date")[
-        ["waste_kg"]
-    ]
+    fig.update_traces(
+        line=dict(width=3),
+        marker=dict(size=7)
+    )
 
-    st.line_chart(waste_chart)
+    st.plotly_chart(
+        apply_chart_theme(fig),
+        use_container_width=True
+    )
+
+    # Fuel
+    st.subheader("⛽ Fuel Consumption")
+
+    fig = px.line(
+        df,
+        x="date",
+        y="fuel_liters",
+        title="Fuel Consumption",
+        markers=True
+    )
+
+    fig.update_yaxes(
+        title="Fuel (L)"
+    )
+
+    fig.update_traces(
+        line=dict(width=3),
+        marker=dict(size=7)
+    )
+
+    st.plotly_chart(
+        apply_chart_theme(fig),
+        use_container_width=True
+    )
+
+    # Waste
+    st.subheader("♻️ Waste Generation")
+
+    fig = px.line(
+        df,
+        x="date",
+        y="waste_kg",
+        title="Waste Generation",
+        markers=True
+    )
+
+    fig.update_yaxes(
+        title="Waste (kg)"
+    )
+
+    fig.update_traces(
+        line=dict(width=3),
+        marker=dict(size=7)
+    )
+
+    st.plotly_chart(
+        apply_chart_theme(fig),
+        use_container_width=True
+    )
 
 
-# ==========================================
+# ============================================================
 # FINANCIAL ANALYSIS
-# ==========================================
+# ============================================================
 
 elif page == "Financial Analysis":
 
     st.header("💰 Financial Analysis")
-
-    latest = df.iloc[-1]
 
     col1, col2, col3 = st.columns(3)
 
@@ -238,43 +537,90 @@ elif page == "Financial Analysis":
 
         st.metric(
             "Revenue",
-            f"₹{latest['revenue']:,.0f}"
+            money(latest["revenue"])
         )
 
     with col2:
 
         st.metric(
             "Operating Profit",
-            f"₹{latest['operating_profit']:,.0f}"
+            money(latest["operating_profit"])
         )
 
     with col3:
 
         st.metric(
             "Net Profit",
-            f"₹{latest['net_profit']:,.0f}"
+            money(latest["net_profit"])
         )
 
-    st.subheader("Revenue vs Net Profit")
+    # Revenue vs Profit
+    st.subheader("📊 Revenue vs Net Profit")
 
-    financial_chart = df.set_index("date")[
+    financial_data = df[
         [
+            "date",
             "revenue",
             "net_profit"
         ]
-    ]
+    ].melt(
+        id_vars="date",
+        var_name="Metric",
+        value_name="Amount"
+    )
 
-    st.line_chart(financial_chart)
+    fig = px.line(
+        financial_data,
+        x="date",
+        y="Amount",
+        color="Metric",
+        title="Revenue vs Net Profit",
+        markers=True
+    )
 
-    st.subheader("Resource Cost")
+    fig.update_yaxes(
+        title="Amount",
+        tickprefix=symbol
+    )
 
-    resource_chart = df.set_index("date")[
-        ["total_resource_cost"]
-    ]
+    fig.update_traces(
+        line=dict(width=3),
+        marker=dict(size=6)
+    )
 
-    st.line_chart(resource_chart)
+    st.plotly_chart(
+        apply_chart_theme(fig),
+        use_container_width=True
+    )
 
-    st.subheader("Cost Breakdown")
+    # Resource cost
+    st.subheader("💸 Resource Cost")
+
+    fig = px.line(
+        df,
+        x="date",
+        y="total_resource_cost",
+        title="Resource Cost Trend",
+        markers=True
+    )
+
+    fig.update_yaxes(
+        title="Resource Cost",
+        tickprefix=symbol
+    )
+
+    fig.update_traces(
+        line=dict(width=3),
+        marker=dict(size=7)
+    )
+
+    st.plotly_chart(
+        apply_chart_theme(fig),
+        use_container_width=True
+    )
+
+    # Cost breakdown
+    st.subheader("📊 Cost Breakdown")
 
     cost_data = pd.DataFrame({
         "Cost Type": [
@@ -285,28 +631,45 @@ elif page == "Financial Analysis":
             "Cleaning"
         ],
         "Cost": [
-            latest["electricity_cost"],
-            latest["water_cost"],
-            latest["fuel_cost"],
-            latest["packaging_cost"],
-            latest["cleaning_cost"]
+            latest["electricity_cost"] * rate,
+            latest["water_cost"] * rate,
+            latest["fuel_cost"] * rate,
+            latest["packaging_cost"] * rate,
+            latest["cleaning_cost"] * rate
         ]
     })
 
-    st.bar_chart(
-        cost_data.set_index("Cost Type")
+    fig = px.bar(
+        cost_data,
+        x="Cost Type",
+        y="Cost",
+        title="Current Resource Cost Breakdown",
+        text="Cost"
+    )
+
+    fig.update_yaxes(
+        title="Cost",
+        tickprefix=symbol
+    )
+
+    fig.update_traces(
+        texttemplate=symbol + "%{text:,.0f}",
+        textposition="outside"
+    )
+
+    st.plotly_chart(
+        apply_chart_theme(fig),
+        use_container_width=True
     )
 
 
-# ==========================================
+# ============================================================
 # BALANCE SHEET
-# ==========================================
+# ============================================================
 
 elif page == "Balance Sheet":
 
     st.header("📑 Balance Sheet")
-
-    latest = df.iloc[-1]
 
     st.subheader("Assets")
 
@@ -329,16 +692,21 @@ elif page == "Balance Sheet":
         ]
     })
 
-    st.dataframe(
-        assets,
-        use_container_width=True
-    )
+    assets_display = assets.copy()
 
-    total_assets = latest["total_assets"]
+    assets_display["Amount"] = assets_display[
+        "Amount"
+    ].apply(money)
+
+    st.dataframe(
+        assets_display,
+        use_container_width=True,
+        hide_index=True
+    )
 
     st.metric(
         "Total Assets",
-        f"₹{total_assets:,.0f}"
+        money(latest["total_assets"])
     )
 
     st.subheader("Liabilities")
@@ -354,21 +722,28 @@ elif page == "Balance Sheet":
         ]
     })
 
+    liabilities_display = liabilities.copy()
+
+    liabilities_display["Amount"] = liabilities_display[
+        "Amount"
+    ].apply(money)
+
     st.dataframe(
-        liabilities,
-        use_container_width=True
+        liabilities_display,
+        use_container_width=True,
+        hide_index=True
     )
 
     st.metric(
         "Total Liabilities",
-        f"₹{latest['total_liabilities']:,.0f}"
+        money(latest["total_liabilities"])
     )
 
     st.subheader("Equity")
 
     st.metric(
         "Total Equity",
-        f"₹{latest['total_equity']:,.0f}"
+        money(latest["total_equity"])
     )
 
     st.divider()
@@ -385,28 +760,48 @@ elif page == "Balance Sheet":
 
         st.metric(
             "Assets",
-            f"₹{latest['total_assets']:,.0f}"
+            money(latest["total_assets"])
         )
 
     with right:
 
-        st.metric(
-            "Liabilities + Equity",
-            f"₹{latest['total_liabilities'] + latest['total_equity']:,.0f}"
+        liabilities_equity = (
+            latest["total_liabilities"]
+            + latest["total_equity"]
         )
 
-    st.success(
-        "✓ The balance sheet is balanced."
+        st.metric(
+            "Liabilities + Equity",
+            money(liabilities_equity)
+        )
+
+    difference = (
+        latest["total_assets"]
+        - liabilities_equity
     )
 
+    if abs(difference) < 1:
 
-# ==========================================
+        st.success(
+            "✓ The balance sheet is balanced."
+        )
+
+    else:
+
+        st.warning(
+            f"Difference: {money(difference)}"
+        )
+
+
+# ============================================================
 # AI PREDICTIONS
-# ==========================================
+# ============================================================
 
 elif page == "AI Predictions":
 
-    st.header("🤖 AI Resource Consumption Prediction")
+    st.header(
+        "🤖 AI Resource Consumption Prediction"
+    )
 
     st.write(
         """
@@ -473,7 +868,10 @@ elif page == "AI Predictions":
         value=100000.0
     )
 
-    if st.button("🔮 Predict Resource Consumption"):
+    if st.button(
+        "🔮 Predict Resource Consumption",
+        use_container_width=True
+    ):
 
         electricity_input = pd.DataFrame({
             "customers": [customers],
@@ -494,13 +892,17 @@ elif page == "AI Predictions":
             "electricity_kwh": [electricity]
         })
 
-        predicted_electricity = electricity_model.predict(
-            electricity_input
-        )[0]
+        predicted_electricity = (
+            electricity_model.predict(
+                electricity_input
+            )[0]
+        )
 
-        predicted_water = water_model.predict(
-            water_input
-        )[0]
+        predicted_water = (
+            water_model.predict(
+                water_input
+            )[0]
+        )
 
         col1, col2 = st.columns(2)
 
@@ -518,21 +920,21 @@ elif page == "AI Predictions":
                 f"{predicted_water:,.0f} m³"
             )
 
-        st.info(
-            "These predictions are generated by the trained "
+        st.success(
+            "Prediction completed using the trained "
             "Random Forest machine-learning models."
         )
 
 
-# ==========================================
+# ============================================================
 # SUSTAINABILITY
-# ==========================================
+# ============================================================
 
 elif page == "Sustainability":
 
-    st.header("🌱 Sustainability & SDG Analysis")
-
-    latest = df.iloc[-1]
+    st.header(
+        "🌱 Sustainability & SDG Analysis"
+    )
 
     electricity_efficiency = (
         latest["electricity_per_customer"]
@@ -569,48 +971,101 @@ elif page == "Sustainability":
             f"{resource_cost:.2f}%"
         )
 
-    st.subheader("Relevant Sustainable Development Goals")
-
-    st.markdown(
-        """
-        **SDG 6 – Clean Water and Sanitation**
-
-        Monitor and reduce water consumption.
-
-        **SDG 7 – Affordable and Clean Energy**
-
-        Monitor electricity consumption and improve energy efficiency.
-
-        **SDG 9 – Industry, Innovation and Infrastructure**
-
-        Use AI/ML to improve resource management.
-
-        **SDG 12 – Responsible Consumption and Production**
-
-        Monitor raw materials, packaging and waste.
-
-        **SDG 13 – Climate Action**
-
-        Reduce unnecessary energy and fuel consumption.
-        """
+    st.subheader(
+        "🌍 Relevant Sustainable Development Goals"
     )
 
-    st.subheader("Resource Consumption Trends")
+    col1, col2 = st.columns(2)
 
-    sustainability_chart = df.set_index("date")[
+    with col1:
+
+        st.info(
+            """
+            **SDG 6 – Clean Water and Sanitation**
+
+            Monitor and reduce water consumption.
+            """
+        )
+
+        st.info(
+            """
+            **SDG 7 – Affordable and Clean Energy**
+
+            Monitor electricity consumption and
+            improve energy efficiency.
+            """
+        )
+
+        st.info(
+            """
+            **SDG 9 – Industry, Innovation and Infrastructure**
+
+            Use AI/ML to improve resource management.
+            """
+        )
+
+    with col2:
+
+        st.info(
+            """
+            **SDG 12 – Responsible Consumption and Production**
+
+            Monitor raw materials, packaging and waste.
+            """
+        )
+
+        st.info(
+            """
+            **SDG 13 – Climate Action**
+
+            Reduce unnecessary energy and fuel consumption.
+            """
+        )
+
+    st.subheader(
+        "📈 Resource Consumption Trends"
+    )
+
+    sustainability_data = df[
         [
+            "date",
             "electricity_kwh",
             "water_m3",
             "waste_kg"
         ]
-    ]
+    ].melt(
+        id_vars="date",
+        var_name="Resource",
+        value_name="Consumption"
+    )
 
-    st.line_chart(sustainability_chart)
+    fig = px.line(
+        sustainability_data,
+        x="date",
+        y="Consumption",
+        color="Resource",
+        title="Resource Consumption Trends",
+        markers=True
+    )
+
+    fig.update_yaxes(
+        title="Consumption"
+    )
+
+    fig.update_traces(
+        line=dict(width=3),
+        marker=dict(size=6)
+    )
+
+    st.plotly_chart(
+        apply_chart_theme(fig),
+        use_container_width=True
+    )
 
 
-# ==========================================
+# ============================================================
 # FOOTER
-# ==========================================
+# ============================================================
 
 st.sidebar.divider()
 
