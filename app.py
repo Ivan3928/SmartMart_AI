@@ -2,269 +2,93 @@ import os
 import joblib
 import pandas as pd
 import streamlit as st
-import plotly.express as px
 
-# ============================================================
+
+# ==========================================
 # PAGE CONFIGURATION
-# ============================================================
+# ==========================================
+
 st.set_page_config(
-    page_title="SmartMart Business Intelligence",
+    page_title="SmartMart Resource Manager",
     page_icon="🏪",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
-# ============================================================
+
+# ==========================================
 # PROJECT PATHS
-# ============================================================
+# ==========================================
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DATA_FILE = os.path.join(
-    BASE_DIR, "data", "raw", "smartmart_data.csv"
+    BASE_DIR,
+    "data",
+    "raw",
+    "smartmart_data.csv"
 )
 
 ELECTRICITY_MODEL_FILE = os.path.join(
-    BASE_DIR, "models", "electricity_model.pkl"
+    BASE_DIR,
+    "models",
+    "electricity_model.pkl"
 )
 
 WATER_MODEL_FILE = os.path.join(
-    BASE_DIR, "models", "water_model.pkl"
+    BASE_DIR,
+    "models",
+    "water_model.pkl"
 )
 
-# ============================================================
+
+# ==========================================
 # LOAD DATA
-# ============================================================
+# ==========================================
+
 @st.cache_data
 def load_data():
-    data = pd.read_csv(DATA_FILE)
-    data["date"] = pd.to_datetime(data["date"])
-    return data.sort_values("date")
+    return pd.read_csv(DATA_FILE)
 
 
 @st.cache_resource
 def load_models():
-    electricity_model = joblib.load(ELECTRICITY_MODEL_FILE)
-    water_model = joblib.load(WATER_MODEL_FILE)
+
+    electricity_model = joblib.load(
+        ELECTRICITY_MODEL_FILE
+    )
+
+    water_model = joblib.load(
+        WATER_MODEL_FILE
+    )
+
     return electricity_model, water_model
 
 
 df = load_data()
+
 electricity_model, water_model = load_models()
-latest = df.iloc[-1]
 
-# ============================================================
-# CURRENCY
-# ============================================================
-currency = st.sidebar.selectbox(
-    "Currency",
-    ["INR (₹)", "USD ($)", "EUR (€)"]
+
+# ==========================================
+# TITLE
+# ==========================================
+
+st.title("🏪 SmartMart Resource & Financial Management System")
+
+st.write(
+    """
+    An AI/ML-based business resource management system
+    for analyzing resource consumption, financial performance,
+    and sustainability of a supermarket.
+    """
 )
 
-currency_rates = {
-    "INR (₹)": 1.0,
-    "USD ($)": 0.0117,
-    "EUR (€)": 0.0100
-}
 
-currency_symbols = {
-    "INR (₹)": "₹",
-    "USD ($)": "$",
-    "EUR (€)": "€"
-}
-
-rate = currency_rates[currency]
-symbol = currency_symbols[currency]
-
-
-def money(value):
-    return f"{symbol}{value * rate:,.0f}"
-
-
-# ============================================================
-# PROFESSIONAL PLOTLY THEME
-# ============================================================
-def apply_chart_theme(fig):
-    """
-    Light-grey chart background with dark readable text.
-    This fixes the previous white-text-on-dark-chart problem.
-    """
-
-    fig.update_layout(
-        # Outside and inside chart backgrounds
-        paper_bgcolor="#E5E7EB",
-        plot_bgcolor="#D1D5DB",
-
-        # Main text
-        font=dict(
-            family="Arial, sans-serif",
-            color="#111827",
-            size=13
-        ),
-
-        # Title
-        title=dict(
-            font=dict(
-                family="Arial, sans-serif",
-                color="#111827",
-                size=18
-            ),
-            x=0.02,
-            xanchor="left"
-        ),
-
-        # X axis
-        xaxis=dict(
-            title_font=dict(
-                family="Arial, sans-serif",
-                color="#111827",
-                size=13
-            ),
-            tickfont=dict(
-                family="Arial, sans-serif",
-                color="#1F2937",
-                size=11
-            ),
-            gridcolor="#B6BDC8",
-            linecolor="#6B7280",
-            zerolinecolor="#9CA3AF",
-            showline=True
-        ),
-
-        # Y axis
-        yaxis=dict(
-            title_font=dict(
-                family="Arial, sans-serif",
-                color="#111827",
-                size=13
-            ),
-            tickfont=dict(
-                family="Arial, sans-serif",
-                color="#1F2937",
-                size=11
-            ),
-            gridcolor="#B6BDC8",
-            linecolor="#6B7280",
-            zerolinecolor="#9CA3AF",
-            showline=True
-        ),
-
-        # Legend
-        legend=dict(
-            font=dict(
-                family="Arial, sans-serif",
-                color="#111827",
-                size=11
-            ),
-            bgcolor="rgba(229,231,235,0.85)",
-            bordercolor="#9CA3AF",
-            borderwidth=1
-        ),
-
-        # Hover box
-        hoverlabel=dict(
-            bgcolor="#FFFFFF",
-            bordercolor="#6B7280",
-            font=dict(
-                family="Arial, sans-serif",
-                color="#111827",
-                size=12
-            )
-        ),
-
-        margin=dict(
-            l=70,
-            r=30,
-            t=65,
-            b=65
-        ),
-
-        hovermode="x unified"
-    )
-
-    # Make line-chart labels, when present, readable.
-    fig.update_traces(
-        selector=dict(type="scatter"),
-        textfont=dict(
-            color="#111827",
-            size=11
-        )
-    )
-
-    # Make bar labels readable.
-    fig.update_traces(
-        selector=dict(type="bar"),
-        textfont=dict(
-            color="#111827",
-            size=11
-        )
-    )
-
-    return fig
-
-
-# ============================================================
-# GENERAL STREAMLIT STYLING
-# ============================================================
-st.markdown(
-    """
-    <style>
-        .main {
-            background-color: #F3F4F6;
-        }
-
-        [data-testid="stAppViewContainer"] {
-            background-color: #F3F4F6;
-        }
-
-        [data-testid="stHeader"] {
-            background-color: #F3F4F6;
-        }
-
-        .block-container {
-            padding-top: 2rem;
-            padding-bottom: 2rem;
-        }
-
-        h1, h2, h3 {
-            color: #111827 !important;
-        }
-
-        p, label, span {
-            color: #1F2937;
-        }
-
-        [data-testid="stMetric"] {
-            background-color: #FFFFFF;
-            border: 1px solid #D1D5DB;
-            border-radius: 12px;
-            padding: 14px;
-        }
-
-        [data-testid="stMetricLabel"] {
-            color: #4B5563 !important;
-        }
-
-        [data-testid="stMetricValue"] {
-            color: #111827 !important;
-        }
-
-        .stDataFrame {
-            border-radius: 10px;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# ============================================================
+# ==========================================
 # SIDEBAR
-# ============================================================
-st.sidebar.title("🏪 SmartMart")
-st.sidebar.caption("Business Intelligence & Resource Management")
+# ==========================================
 
-st.sidebar.divider()
-
-st.sidebar.subheader("Navigation")
+st.sidebar.title("Navigation")
 
 page = st.sidebar.radio(
     "Select Section",
@@ -278,323 +102,179 @@ page = st.sidebar.radio(
     ]
 )
 
-st.sidebar.divider()
 
-st.sidebar.subheader("Business Model")
-st.sidebar.info("Supermarket / Retail Business")
-
-st.sidebar.divider()
-
-st.sidebar.caption("AI & Data Science Minor Project")
-st.sidebar.caption("Royal Global University")
-
-# ============================================================
+# ==========================================
 # DASHBOARD
-# ============================================================
+# ==========================================
+
 if page == "Dashboard":
 
-    st.title("🏪 SmartMart Business Dashboard")
+    st.header("📊 Business Dashboard")
 
-    st.write(
-        "AI/ML-powered business intelligence for financial performance, "
-        "resource consumption and sustainability."
-    )
-
-    st.divider()
+    latest = df.iloc[-1]
 
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("Revenue", money(latest["revenue"]))
+        st.metric(
+            "Revenue",
+            f"₹{latest['revenue']:,.0f}"
+        )
 
     with col2:
-        st.metric("Net Profit", money(latest["net_profit"]))
+        st.metric(
+            "Net Profit",
+            f"₹{latest['net_profit']:,.0f}"
+        )
 
     with col3:
-        st.metric("Customers", f"{latest['customers']:,.0f}")
+        st.metric(
+            "Customers",
+            f"{latest['customers']:,.0f}"
+        )
 
     with col4:
-        st.metric("Resource Cost", money(latest["total_resource_cost"]))
-
-    st.write("")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        fig = px.line(
-            df,
-            x="date",
-            y="revenue",
-            title="Revenue Trend",
-            markers=True
+        st.metric(
+            "Resource Cost",
+            f"₹{latest['total_resource_cost']:,.0f}"
         )
 
-        fig.update_yaxes(
-            title="Revenue",
-            tickprefix=symbol
-        )
+    st.subheader("Revenue Trend")
 
-        fig.update_traces(
-            line=dict(width=3),
-            marker=dict(size=7),
-            hovertemplate="Date: %{x|%b %Y}<br>Revenue: "
-                          + symbol + "%{y:,.0f}<extra></extra>"
-        )
+    revenue_chart = df.set_index("date")[
+        ["revenue"]
+    ]
 
-        st.plotly_chart(
-            apply_chart_theme(fig),
-            use_container_width=True
-        )
+    st.line_chart(revenue_chart)
 
-    with col2:
-        fig = px.line(
-            df,
-            x="date",
-            y="net_profit",
-            title="Net Profit Trend",
-            markers=True
-        )
+    st.subheader("Net Profit Trend")
 
-        fig.update_yaxes(
-            title="Net Profit",
-            tickprefix=symbol
-        )
+    profit_chart = df.set_index("date")[
+        ["net_profit"]
+    ]
 
-        fig.update_traces(
-            line=dict(width=3),
-            marker=dict(size=7),
-            hovertemplate="Date: %{x|%b %Y}<br>Net Profit: "
-                          + symbol + "%{y:,.0f}<extra></extra>"
-        )
+    st.line_chart(profit_chart)
 
-        st.plotly_chart(
-            apply_chart_theme(fig),
-            use_container_width=True
-        )
 
-    st.subheader("Business Health")
+# ==========================================
+# RESOURCE CONSUMPTION
+# ==========================================
 
-    profit_margin = (
-        latest["net_profit"] / latest["revenue"] * 100
-    )
+elif page == "Resource Consumption":
 
-    resource_percentage = latest["resource_cost_percentage"]
-    electricity_per_customer = latest["electricity_per_customer"]
+    st.header("⚡ Resource Consumption")
+
+    latest = df.iloc[-1]
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.metric("Net Profit Margin", f"{profit_margin:.2f}%")
 
-    with col2:
-        st.metric(
-            "Resource Cost / Revenue",
-            f"{resource_percentage:.2f}%"
-        )
-
-    with col3:
-        st.metric(
-            "Electricity / Customer",
-            f"{electricity_per_customer:.2f} kWh"
-        )
-
-# ============================================================
-# RESOURCE CONSUMPTION
-# ============================================================
-elif page == "Resource Consumption":
-
-    st.title("⚡ Resource Consumption")
-
-    st.write(
-        "Monitor electricity, water, fuel and waste consumption."
-    )
-
-    st.divider()
-
-    col1, col2, col3, col4 = st.columns(4)
-
-    with col1:
         st.metric(
             "Electricity",
             f"{latest['electricity_kwh']:,.0f} kWh"
         )
 
     with col2:
+
         st.metric(
             "Water",
             f"{latest['water_m3']:,.0f} m³"
         )
 
     with col3:
+
         st.metric(
             "Fuel",
             f"{latest['fuel_liters']:,.0f} L"
         )
 
-    with col4:
-        st.metric(
-            "Waste",
-            f"{latest['waste_kg']:,.0f} kg"
-        )
+    st.subheader("Electricity Consumption")
 
-    st.write("")
+    electricity_chart = df.set_index("date")[
+        ["electricity_kwh"]
+    ]
 
-    col1, col2 = st.columns(2)
+    st.line_chart(electricity_chart)
 
-    with col1:
-        fig = px.line(
-            df,
-            x="date",
-            y="electricity_kwh",
-            title="Electricity Consumption",
-            markers=True
-        )
-        fig.update_yaxes(title="Electricity (kWh)")
-        fig.update_traces(
-            line=dict(width=3),
-            marker=dict(size=7)
-        )
-        st.plotly_chart(
-            apply_chart_theme(fig),
-            use_container_width=True
-        )
+    st.subheader("Water Consumption")
 
-    with col2:
-        fig = px.line(
-            df,
-            x="date",
-            y="water_m3",
-            title="Water Consumption",
-            markers=True
-        )
-        fig.update_yaxes(title="Water (m³)")
-        fig.update_traces(
-            line=dict(width=3),
-            marker=dict(size=7)
-        )
-        st.plotly_chart(
-            apply_chart_theme(fig),
-            use_container_width=True
-        )
+    water_chart = df.set_index("date")[
+        ["water_m3"]
+    ]
 
-    col1, col2 = st.columns(2)
+    st.line_chart(water_chart)
 
-    with col1:
-        fig = px.line(
-            df,
-            x="date",
-            y="fuel_liters",
-            title="Fuel Consumption",
-            markers=True
-        )
-        fig.update_yaxes(title="Fuel (Liters)")
-        fig.update_traces(
-            line=dict(width=3),
-            marker=dict(size=7)
-        )
-        st.plotly_chart(
-            apply_chart_theme(fig),
-            use_container_width=True
-        )
+    st.subheader("Fuel Consumption")
 
-    with col2:
-        fig = px.line(
-            df,
-            x="date",
-            y="waste_kg",
-            title="Waste Generation",
-            markers=True
-        )
-        fig.update_yaxes(title="Waste (kg)")
-        fig.update_traces(
-            line=dict(width=3),
-            marker=dict(size=7)
-        )
-        st.plotly_chart(
-            apply_chart_theme(fig),
-            use_container_width=True
-        )
+    fuel_chart = df.set_index("date")[
+        ["fuel_liters"]
+    ]
 
-# ============================================================
+    st.line_chart(fuel_chart)
+
+    st.subheader("Waste Generation")
+
+    waste_chart = df.set_index("date")[
+        ["waste_kg"]
+    ]
+
+    st.line_chart(waste_chart)
+
+
+# ==========================================
 # FINANCIAL ANALYSIS
-# ============================================================
+# ==========================================
+
 elif page == "Financial Analysis":
 
-    st.title("💰 Financial Analysis")
+    st.header("💰 Financial Analysis")
 
-    st.write(
-        "Analyze revenue, operating profit, net profit and "
-        "resource-related business costs."
-    )
-
-    st.divider()
+    latest = df.iloc[-1]
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.metric("Revenue", money(latest["revenue"]))
+
+        st.metric(
+            "Revenue",
+            f"₹{latest['revenue']:,.0f}"
+        )
 
     with col2:
+
         st.metric(
             "Operating Profit",
-            money(latest["operating_profit"])
+            f"₹{latest['operating_profit']:,.0f}"
         )
 
     with col3:
-        st.metric("Net Profit", money(latest["net_profit"]))
 
-    st.write("")
+        st.metric(
+            "Net Profit",
+            f"₹{latest['net_profit']:,.0f}"
+        )
 
-    financial_long = df[
-        ["date", "revenue", "operating_profit", "net_profit"]
-    ].melt(
-        id_vars="date",
-        var_name="Metric",
-        value_name="Amount"
-    )
+    st.subheader("Revenue vs Net Profit")
 
-    fig = px.line(
-        financial_long,
-        x="date",
-        y="Amount",
-        color="Metric",
-        title="Revenue and Profit Performance",
-        markers=True
-    )
+    financial_chart = df.set_index("date")[
+        [
+            "revenue",
+            "net_profit"
+        ]
+    ]
 
-    fig.update_yaxes(
-        title="Amount",
-        tickprefix=symbol
-    )
+    st.line_chart(financial_chart)
 
-    fig.update_traces(
-        line=dict(width=3),
-        marker=dict(size=6)
-    )
+    st.subheader("Resource Cost")
 
-    st.plotly_chart(
-        apply_chart_theme(fig),
-        use_container_width=True
-    )
+    resource_chart = df.set_index("date")[
+        ["total_resource_cost"]
+    ]
 
-    fig = px.area(
-        df,
-        x="date",
-        y="total_resource_cost",
-        title="Total Resource Cost Trend"
-    )
+    st.line_chart(resource_chart)
 
-    fig.update_yaxes(
-        title="Resource Cost",
-        tickprefix=symbol
-    )
-
-    st.plotly_chart(
-        apply_chart_theme(fig),
-        use_container_width=True
-    )
-
-    st.subheader("Resource Cost Breakdown")
+    st.subheader("Cost Breakdown")
 
     cost_data = pd.DataFrame({
         "Cost Type": [
@@ -605,49 +285,28 @@ elif page == "Financial Analysis":
             "Cleaning"
         ],
         "Cost": [
-            latest["electricity_cost"] * rate,
-            latest["water_cost"] * rate,
-            latest["fuel_cost"] * rate,
-            latest["packaging_cost"] * rate,
-            latest["cleaning_cost"] * rate
+            latest["electricity_cost"],
+            latest["water_cost"],
+            latest["fuel_cost"],
+            latest["packaging_cost"],
+            latest["cleaning_cost"]
         ]
     })
 
-    fig = px.bar(
-        cost_data,
-        x="Cost Type",
-        y="Cost",
-        title="Current Resource Cost Breakdown",
-        text="Cost"
+    st.bar_chart(
+        cost_data.set_index("Cost Type")
     )
 
-    fig.update_yaxes(
-        title="Cost",
-        tickprefix=symbol
-    )
 
-    fig.update_traces(
-        texttemplate=symbol + "%{text:,.0f}",
-        textposition="outside"
-    )
-
-    st.plotly_chart(
-        apply_chart_theme(fig),
-        use_container_width=True
-    )
-
-# ============================================================
+# ==========================================
 # BALANCE SHEET
-# ============================================================
+# ==========================================
+
 elif page == "Balance Sheet":
 
-    st.title("📑 Balance Sheet")
+    st.header("📑 Balance Sheet")
 
-    st.write(
-        "Financial position based on assets, liabilities and equity."
-    )
-
-    st.divider()
+    latest = df.iloc[-1]
 
     st.subheader("Assets")
 
@@ -670,21 +329,17 @@ elif page == "Balance Sheet":
         ]
     })
 
-    assets_display = assets.copy()
-    assets_display["Amount"] = assets_display["Amount"].apply(money)
-
     st.dataframe(
-        assets_display,
-        use_container_width=True,
-        hide_index=True
+        assets,
+        use_container_width=True
     )
+
+    total_assets = latest["total_assets"]
 
     st.metric(
         "Total Assets",
-        money(latest["total_assets"])
+        f"₹{total_assets:,.0f}"
     )
-
-    st.write("")
 
     st.subheader("Liabilities")
 
@@ -699,152 +354,126 @@ elif page == "Balance Sheet":
         ]
     })
 
-    liabilities_display = liabilities.copy()
-    liabilities_display["Amount"] = liabilities_display["Amount"].apply(money)
-
     st.dataframe(
-        liabilities_display,
-        use_container_width=True,
-        hide_index=True
+        liabilities,
+        use_container_width=True
     )
 
     st.metric(
         "Total Liabilities",
-        money(latest["total_liabilities"])
+        f"₹{latest['total_liabilities']:,.0f}"
     )
-
-    st.write("")
 
     st.subheader("Equity")
 
     st.metric(
         "Total Equity",
-        money(latest["total_equity"])
+        f"₹{latest['total_equity']:,.0f}"
     )
 
     st.divider()
 
     st.subheader("Accounting Equation")
 
-    st.info("Assets = Liabilities + Equity")
+    st.write(
+        "Assets = Liabilities + Equity"
+    )
 
-    col1, col2 = st.columns(2)
+    left, right = st.columns(2)
 
-    with col1:
+    with left:
+
         st.metric(
-            "Total Assets",
-            money(latest["total_assets"])
+            "Assets",
+            f"₹{latest['total_assets']:,.0f}"
         )
 
-    with col2:
-        liabilities_equity = (
-            latest["total_liabilities"]
-            + latest["total_equity"]
-        )
+    with right:
 
         st.metric(
             "Liabilities + Equity",
-            money(liabilities_equity)
+            f"₹{latest['total_liabilities'] + latest['total_equity']:,.0f}"
         )
 
-    difference = (
-        latest["total_assets"] - liabilities_equity
+    st.success(
+        "✓ The balance sheet is balanced."
     )
 
-    if abs(difference) < 1:
-        st.success("✓ Balance sheet is balanced.")
-    else:
-        st.warning(
-            f"Balance sheet difference: {money(difference)}"
-        )
 
-# ============================================================
+# ==========================================
 # AI PREDICTIONS
-# ============================================================
+# ==========================================
+
 elif page == "AI Predictions":
 
-    st.title("🤖 AI Resource Consumption Prediction")
+    st.header("🤖 AI Resource Consumption Prediction")
 
     st.write(
-        "Use the trained machine-learning models to estimate "
-        "future electricity and water consumption."
+        """
+        Use the business inputs below to estimate
+        future electricity and water consumption.
+        """
     )
 
-    st.divider()
-
-    st.info(
-        "The application uses trained Random Forest models "
-        "for resource consumption prediction."
+    customers = st.number_input(
+        "Expected Customers",
+        min_value=1000,
+        max_value=100000,
+        value=20000,
+        step=1000
     )
 
-    col1, col2 = st.columns(2)
+    employees = st.number_input(
+        "Employees",
+        min_value=1,
+        max_value=500,
+        value=50
+    )
 
-    with col1:
-        customers = st.number_input(
-            "Expected Customers",
-            min_value=1000,
-            max_value=100000,
-            value=20000,
-            step=1000
-        )
+    operating_hours = st.number_input(
+        "Operating Hours per Day",
+        min_value=1.0,
+        max_value=24.0,
+        value=14.0
+    )
 
-        employees = st.number_input(
-            "Employees",
-            min_value=1,
-            max_value=500,
-            value=50
-        )
+    sales_area = st.number_input(
+        "Sales Area (m²)",
+        min_value=100.0,
+        max_value=10000.0,
+        value=2500.0
+    )
 
-        operating_hours = st.number_input(
-            "Operating Hours per Day",
-            min_value=1.0,
-            max_value=24.0,
-            value=14.0
-        )
+    revenue = st.number_input(
+        "Expected Revenue (₹)",
+        min_value=100000.0,
+        max_value=100000000.0,
+        value=15000000.0,
+        step=100000.0
+    )
 
-        sales_area = st.number_input(
-            "Sales Area (m²)",
-            min_value=100.0,
-            max_value=10000.0,
-            value=2500.0
-        )
+    water = st.number_input(
+        "Expected Water Consumption (m³)",
+        min_value=100.0,
+        max_value=10000.0,
+        value=1500.0
+    )
 
-    with col2:
-        revenue = st.number_input(
-            "Expected Revenue (₹)",
-            min_value=100000.0,
-            max_value=100000000.0,
-            value=15000000.0,
-            step=100000.0
-        )
+    fuel = st.number_input(
+        "Expected Fuel Consumption (L)",
+        min_value=100.0,
+        max_value=50000.0,
+        value=4000.0
+    )
 
-        water = st.number_input(
-            "Expected Water Consumption (m³)",
-            min_value=100.0,
-            max_value=10000.0,
-            value=1500.0
-        )
+    electricity = st.number_input(
+        "Expected Electricity (kWh)",
+        min_value=10000.0,
+        max_value=1000000.0,
+        value=100000.0
+    )
 
-        fuel = st.number_input(
-            "Expected Fuel Consumption (L)",
-            min_value=100.0,
-            max_value=50000.0,
-            value=4000.0
-        )
-
-        electricity = st.number_input(
-            "Expected Electricity (kWh)",
-            min_value=10000.0,
-            max_value=1000000.0,
-            value=100000.0
-        )
-
-    st.write("")
-
-    if st.button(
-        "🔮 Run AI Prediction",
-        use_container_width=True
-    ):
+    if st.button("🔮 Predict Resource Consumption"):
 
         electricity_input = pd.DataFrame({
             "customers": [customers],
@@ -873,146 +502,122 @@ elif page == "AI Predictions":
             water_input
         )[0]
 
-        st.write("")
-
         col1, col2 = st.columns(2)
 
         with col1:
+
             st.metric(
                 "Predicted Electricity",
                 f"{predicted_electricity:,.0f} kWh"
             )
 
         with col2:
+
             st.metric(
                 "Predicted Water",
                 f"{predicted_water:,.0f} m³"
             )
 
-        st.success("Prediction completed successfully.")
-
-        st.caption(
-            "Predictions are generated using the trained "
+        st.info(
+            "These predictions are generated by the trained "
             "Random Forest machine-learning models."
         )
 
-# ============================================================
+
+# ==========================================
 # SUSTAINABILITY
-# ============================================================
+# ==========================================
+
 elif page == "Sustainability":
 
-    st.title("🌱 Sustainability & SDG Analysis")
+    st.header("🌱 Sustainability & SDG Analysis")
 
-    st.write(
-        "Measure resource efficiency and connect SmartMart's "
-        "operations with relevant Sustainable Development Goals."
+    latest = df.iloc[-1]
+
+    electricity_efficiency = (
+        latest["electricity_per_customer"]
     )
 
-    st.divider()
+    water_efficiency = (
+        latest["water_per_customer"]
+    )
 
-    electricity_efficiency = latest["electricity_per_customer"]
-    water_efficiency = latest["water_per_customer"]
-    resource_cost = latest["resource_cost_percentage"]
+    resource_cost = (
+        latest["resource_cost_percentage"]
+    )
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
+
         st.metric(
             "Electricity / Customer",
             f"{electricity_efficiency:.2f} kWh"
         )
 
     with col2:
+
         st.metric(
             "Water / Customer",
             f"{water_efficiency:.3f} m³"
         )
 
     with col3:
+
         st.metric(
             "Resource Cost / Revenue",
             f"{resource_cost:.2f}%"
         )
 
-    st.write("")
-
     st.subheader("Relevant Sustainable Development Goals")
 
-    col1, col2 = st.columns(2)
+    st.markdown(
+        """
+        **SDG 6 – Clean Water and Sanitation**
 
-    with col1:
-        st.info(
-            "SDG 6 – Clean Water and Sanitation\n\n"
-            "Monitor and reduce water consumption "
-            "through improved resource efficiency."
-        )
+        Monitor and reduce water consumption.
 
-        st.info(
-            "SDG 7 – Affordable and Clean Energy\n\n"
-            "Monitor electricity consumption and "
-            "improve energy efficiency."
-        )
+        **SDG 7 – Affordable and Clean Energy**
 
-        st.info(
-            "SDG 9 – Industry, Innovation and Infrastructure\n\n"
-            "Use AI and machine learning to improve "
-            "business resource management."
-        )
+        Monitor electricity consumption and improve energy efficiency.
 
-    with col2:
-        st.info(
-            "SDG 12 – Responsible Consumption and Production\n\n"
-            "Monitor raw materials, packaging, waste "
-            "and operational resources."
-        )
+        **SDG 9 – Industry, Innovation and Infrastructure**
 
-        st.info(
-            "SDG 13 – Climate Action\n\n"
-            "Reduce unnecessary energy and fuel "
-            "consumption through better planning."
-        )
+        Use AI/ML to improve resource management.
 
-    st.write("")
+        **SDG 12 – Responsible Consumption and Production**
+
+        Monitor raw materials, packaging and waste.
+
+        **SDG 13 – Climate Action**
+
+        Reduce unnecessary energy and fuel consumption.
+        """
+    )
 
     st.subheader("Resource Consumption Trends")
 
-    sustainability_data = df[
+    sustainability_chart = df.set_index("date")[
         [
-            "date",
             "electricity_kwh",
             "water_m3",
             "waste_kg"
         ]
-    ].melt(
-        id_vars="date",
-        var_name="Resource",
-        value_name="Consumption"
-    )
+    ]
 
-    fig = px.line(
-        sustainability_data,
-        x="date",
-        y="Consumption",
-        color="Resource",
-        title="Electricity, Water and Waste Trends",
-        markers=True
-    )
+    st.line_chart(sustainability_chart)
 
-    fig.update_yaxes(title="Consumption")
 
-    fig.update_traces(
-        line=dict(width=3),
-        marker=dict(size=6)
-    )
-
-    st.plotly_chart(
-        apply_chart_theme(fig),
-        use_container_width=True
-    )
-
-# ============================================================
+# ==========================================
 # FOOTER
-# ============================================================
+# ==========================================
+
 st.sidebar.divider()
-st.sidebar.caption("SmartMart AI/ML Minor Project")
-st.sidebar.caption("Business Resource & Sustainability Management")
+
+st.sidebar.caption(
+    "SmartMart AI/ML Minor Project"
+)
+
+st.sidebar.caption(
+    "Business Resource & Sustainability Management"
+)
