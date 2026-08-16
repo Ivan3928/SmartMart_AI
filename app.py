@@ -382,8 +382,6 @@ if page == "Dashboard":
         apply_chart_theme(fig),
         use_container_width=True
     )
-
-
 # ============================================================
 # RESOURCE CONSUMPTION
 # ============================================================
@@ -392,135 +390,305 @@ elif page == "Resource Consumption":
 
     st.header("⚡ Resource Consumption")
 
-    col1, col2, col3, col4 = st.columns(4)
+    st.write(
+        "Select a resource category to analyze its consumption."
+    )
 
-    with col1:
+    # --------------------------------------------------------
+    # RESOURCE CATEGORY SELECTOR
+    # --------------------------------------------------------
 
-        st.metric(
-            "Electricity",
-            f"{latest['electricity_kwh']:,.0f} kWh"
+    resource_category = st.selectbox(
+        "Select Resource Category",
+        [
+            "📊 All Resources",
+            "⚡ Electricity",
+            "💧 Water",
+            "⛽ Fuel",
+            "♻️ Waste"
+        ]
+    )
+
+    st.divider()
+
+    # --------------------------------------------------------
+    # ALL RESOURCES
+    # --------------------------------------------------------
+
+    if resource_category == "📊 All Resources":
+
+        st.subheader("📊 Resource Overview")
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            st.metric(
+                "⚡ Electricity",
+                f"{latest['electricity_kwh']:,.0f} kWh"
+            )
+
+        with col2:
+            st.metric(
+                "💧 Water",
+                f"{latest['water_m3']:,.0f} m³"
+            )
+
+        with col3:
+            st.metric(
+                "⛽ Fuel",
+                f"{latest['fuel_liters']:,.0f} L"
+            )
+
+        with col4:
+            st.metric(
+                "♻️ Waste",
+                f"{latest['waste_kg']:,.0f} kg"
+            )
+
+        st.subheader("📈 Resource Consumption Trends")
+
+        resource_data = df[
+            [
+                "date",
+                "electricity_kwh",
+                "water_m3",
+                "fuel_liters",
+                "waste_kg"
+            ]
+        ].melt(
+            id_vars="date",
+            var_name="Resource",
+            value_name="Consumption"
         )
 
-    with col2:
-
-        st.metric(
-            "Water",
-            f"{latest['water_m3']:,.0f} m³"
+        fig = px.line(
+            resource_data,
+            x="date",
+            y="Consumption",
+            color="Resource",
+            title="All Resource Consumption",
+            markers=True
         )
 
-    with col3:
-
-        st.metric(
-            "Fuel",
-            f"{latest['fuel_liters']:,.0f} L"
+        fig.update_yaxes(
+            title="Consumption"
         )
 
-    with col4:
-
-        st.metric(
-            "Waste",
-            f"{latest['waste_kg']:,.0f} kg"
+        fig.update_traces(
+            line=dict(width=3),
+            marker=dict(size=6)
         )
 
-    # Electricity
-    st.subheader("⚡ Electricity Consumption")
+        st.plotly_chart(
+            apply_chart_theme(fig),
+            use_container_width=True
+        )
 
-    fig = px.line(
-        df,
-        x="date",
-        y="electricity_kwh",
-        title="Electricity Consumption",
-        markers=True
-    )
 
-    fig.update_yaxes(
-        title="Electricity (kWh)"
-    )
+    # --------------------------------------------------------
+    # ELECTRICITY
+    # --------------------------------------------------------
 
-    fig.update_traces(
-        line=dict(width=3),
-        marker=dict(size=7)
-    )
+    elif resource_category == "⚡ Electricity":
 
-    st.plotly_chart(
-        apply_chart_theme(fig),
-        use_container_width=True
-    )
+        st.subheader("⚡ Electricity Consumption")
 
-    # Water
-    st.subheader("💧 Water Consumption")
+        col1, col2 = st.columns(2)
 
-    fig = px.line(
-        df,
-        x="date",
-        y="water_m3",
-        title="Water Consumption",
-        markers=True
-    )
+        with col1:
 
-    fig.update_yaxes(
-        title="Water (m³)"
-    )
+            st.metric(
+                "Current Electricity",
+                f"{latest['electricity_kwh']:,.0f} kWh"
+            )
 
-    fig.update_traces(
-        line=dict(width=3),
-        marker=dict(size=7)
-    )
+        with col2:
 
-    st.plotly_chart(
-        apply_chart_theme(fig),
-        use_container_width=True
-    )
+            electricity_average = df[
+                "electricity_kwh"
+            ].mean()
 
-    # Fuel
-    st.subheader("⛽ Fuel Consumption")
+            st.metric(
+                "Average Electricity",
+                f"{electricity_average:,.0f} kWh"
+            )
 
-    fig = px.line(
-        df,
-        x="date",
-        y="fuel_liters",
-        title="Fuel Consumption",
-        markers=True
-    )
+        fig = px.line(
+            df,
+            x="date",
+            y="electricity_kwh",
+            title="Electricity Consumption Trend",
+            markers=True
+        )
 
-    fig.update_yaxes(
-        title="Fuel (L)"
-    )
+        fig.update_yaxes(
+            title="Electricity (kWh)"
+        )
 
-    fig.update_traces(
-        line=dict(width=3),
-        marker=dict(size=7)
-    )
+        fig.update_traces(
+            line=dict(width=3),
+            marker=dict(size=7)
+        )
 
-    st.plotly_chart(
-        apply_chart_theme(fig),
-        use_container_width=True
-    )
+        st.plotly_chart(
+            apply_chart_theme(fig),
+            use_container_width=True
+        )
 
-    # Waste
-    st.subheader("♻️ Waste Generation")
 
-    fig = px.line(
-        df,
-        x="date",
-        y="waste_kg",
-        title="Waste Generation",
-        markers=True
-    )
+    # --------------------------------------------------------
+    # WATER
+    # --------------------------------------------------------
 
-    fig.update_yaxes(
-        title="Waste (kg)"
-    )
+    elif resource_category == "💧 Water":
 
-    fig.update_traces(
-        line=dict(width=3),
-        marker=dict(size=7)
-    )
+        st.subheader("💧 Water Consumption")
 
-    st.plotly_chart(
-        apply_chart_theme(fig),
-        use_container_width=True
-    )
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            st.metric(
+                "Current Water",
+                f"{latest['water_m3']:,.0f} m³"
+            )
+
+        with col2:
+
+            water_average = df[
+                "water_m3"
+            ].mean()
+
+            st.metric(
+                "Average Water",
+                f"{water_average:,.0f} m³"
+            )
+
+        fig = px.line(
+            df,
+            x="date",
+            y="water_m3",
+            title="Water Consumption Trend",
+            markers=True
+        )
+
+        fig.update_yaxes(
+            title="Water (m³)"
+        )
+
+        fig.update_traces(
+            line=dict(width=3),
+            marker=dict(size=7)
+        )
+
+        st.plotly_chart(
+            apply_chart_theme(fig),
+            use_container_width=True
+        )
+
+
+    # --------------------------------------------------------
+    # FUEL
+    # --------------------------------------------------------
+
+    elif resource_category == "⛽ Fuel":
+
+        st.subheader("⛽ Fuel Consumption")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            st.metric(
+                "Current Fuel",
+                f"{latest['fuel_liters']:,.0f} L"
+            )
+
+        with col2:
+
+            fuel_average = df[
+                "fuel_liters"
+            ].mean()
+
+            st.metric(
+                "Average Fuel",
+                f"{fuel_average:,.0f} L"
+            )
+
+        fig = px.line(
+            df,
+            x="date",
+            y="fuel_liters",
+            title="Fuel Consumption Trend",
+            markers=True
+        )
+
+        fig.update_yaxes(
+            title="Fuel (L)"
+        )
+
+        fig.update_traces(
+            line=dict(width=3),
+            marker=dict(size=7)
+        )
+
+        st.plotly_chart(
+            apply_chart_theme(fig),
+            use_container_width=True
+        )
+
+
+    # --------------------------------------------------------
+    # WASTE
+    # --------------------------------------------------------
+
+    elif resource_category == "♻️ Waste":
+
+        st.subheader("♻️ Waste Generation")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            st.metric(
+                "Current Waste",
+                f"{latest['waste_kg']:,.0f} kg"
+            )
+
+        with col2:
+
+            waste_average = df[
+                "waste_kg"
+            ].mean()
+
+            st.metric(
+                "Average Waste",
+                f"{waste_average:,.0f} kg"
+            )
+
+        fig = px.line(
+            df,
+            x="date",
+            y="waste_kg",
+            title="Waste Generation Trend",
+            markers=True
+        )
+
+        fig.update_yaxes(
+            title="Waste (kg)"
+        )
+
+        fig.update_traces(
+            line=dict(width=3),
+            marker=dict(size=7)
+        )
+
+        st.plotly_chart(
+            apply_chart_theme(fig),
+            use_container_width=True
+        )
+
+
 
 
 # ============================================================
