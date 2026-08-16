@@ -2,6 +2,7 @@ import os
 import joblib
 import pandas as pd
 import streamlit as st
+import plotly.express as px
 
 
 # ============================================================
@@ -9,193 +10,11 @@ import streamlit as st
 # ============================================================
 
 st.set_page_config(
-    page_title="SmartMart | Business Intelligence",
+    page_title="SmartMart Business Intelligence",
     page_icon="🏪",
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-
-# ============================================================
-# PROFESSIONAL UI STYLE
-# ============================================================
-
-st.markdown("""
-<style>
-
-    /* Main application */
-    .stApp {
-        background-color: #f5f7fa;
-    }
-
-    /* Remove extra top padding */
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 3rem;
-        max-width: 1400px;
-    }
-
-    /* Sidebar */
-    section[data-testid="stSidebar"] {
-        background-color: #111827;
-        border-right: 1px solid #1f2937;
-    }
-
-    section[data-testid="stSidebar"] * {
-        color: #f9fafb;
-    }
-
-    /* Brand */
-    .brand {
-        font-size: 26px;
-        font-weight: 800;
-        letter-spacing: -0.5px;
-        margin-bottom: 3px;
-    }
-
-    .brand-subtitle {
-        font-size: 12px;
-        color: #9ca3af;
-        margin-bottom: 25px;
-    }
-
-    /* Page title */
-    .page-title {
-        font-size: 32px;
-        font-weight: 800;
-        color: #111827;
-        margin-bottom: 4px;
-    }
-
-    .page-subtitle {
-        color: #6b7280;
-        font-size: 15px;
-        margin-bottom: 25px;
-    }
-
-    /* KPI Cards */
-    .kpi-card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 14px;
-        padding: 20px;
-        min-height: 125px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    }
-
-    .kpi-label {
-        color: #6b7280;
-        font-size: 13px;
-        font-weight: 600;
-        margin-bottom: 8px;
-    }
-
-    .kpi-value {
-        color: #111827;
-        font-size: 25px;
-        font-weight: 800;
-    }
-
-    .kpi-description {
-        color: #9ca3af;
-        font-size: 12px;
-        margin-top: 7px;
-    }
-
-    /* Section cards */
-    .section-card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 14px;
-        padding: 22px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-    }
-
-    /* Status */
-    .status-good {
-        background: #ecfdf5;
-        color: #047857;
-        padding: 8px 14px;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 600;
-        display: inline-block;
-    }
-
-    .status-info {
-        background: #eff6ff;
-        color: #1d4ed8;
-        padding: 8px 14px;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 600;
-        display: inline-block;
-    }
-
-    /* AI badge */
-    .ai-badge {
-        background: #eef2ff;
-        color: #4338ca;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 700;
-        display: inline-block;
-    }
-
-    /* SDG cards */
-    .sdg-card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 17px;
-        min-height: 145px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-    }
-
-    .sdg-number {
-        font-size: 12px;
-        font-weight: 800;
-        color: #047857;
-        margin-bottom: 7px;
-    }
-
-    .sdg-title {
-        font-weight: 700;
-        color: #111827;
-        margin-bottom: 7px;
-    }
-
-    .sdg-text {
-        color: #6b7280;
-        font-size: 12px;
-        line-height: 1.5;
-    }
-
-    /* Buttons */
-    .stButton > button {
-        border-radius: 9px;
-        font-weight: 700;
-        min-height: 42px;
-    }
-
-    /* Dataframes */
-    [data-testid="stDataFrame"] {
-        border-radius: 10px;
-    }
-
-    /* Footer */
-    .footer {
-        text-align: center;
-        color: #9ca3af;
-        font-size: 12px;
-        padding-top: 30px;
-        padding-bottom: 10px;
-    }
-
-</style>
-""", unsafe_allow_html=True)
 
 
 # ============================================================
@@ -242,11 +61,19 @@ def load_models():
 
 
 df = load_data()
+
 electricity_model, water_model = load_models()
 
 
 # ============================================================
-# CURRENCY SETTINGS
+# PREPARE DATE
+# ============================================================
+
+df["date"] = pd.to_datetime(df["date"])
+
+
+# ============================================================
+# CURRENCY
 # ============================================================
 
 currency = st.sidebar.selectbox(
@@ -275,260 +102,296 @@ def money(value):
 
 
 # ============================================================
+# PLOTLY CHART THEME
+# ============================================================
+
+CHART_BACKGROUND = "#4B5563"
+PAPER_BACKGROUND = "#D9DDE3"
+TEXT_COLOR = "white"
+
+
+def apply_chart_theme(fig):
+
+    fig.update_layout(
+        paper_bgcolor=PAPER_BACKGROUND,
+        plot_bgcolor=CHART_BACKGROUND,
+        font=dict(
+            color=TEXT_COLOR,
+            size=13
+        ),
+        title_font=dict(
+            color=TEXT_COLOR,
+            size=18
+        ),
+        xaxis=dict(
+            title_font=dict(color=TEXT_COLOR),
+            tickfont=dict(color=TEXT_COLOR),
+            gridcolor="#6B7280",
+            linecolor="#9CA3AF"
+        ),
+        yaxis=dict(
+            title_font=dict(color=TEXT_COLOR),
+            tickfont=dict(color=TEXT_COLOR),
+            gridcolor="#6B7280",
+            linecolor="#9CA3AF"
+        ),
+        legend=dict(
+            font=dict(color=TEXT_COLOR)
+        ),
+        margin=dict(
+            l=50,
+            r=30,
+            t=60,
+            b=50
+        )
+    )
+
+    return fig
+
+
+# ============================================================
 # SIDEBAR
 # ============================================================
 
-with st.sidebar:
+st.sidebar.title("🏪 SmartMart")
 
-    st.markdown(
-        """
-        <div class="brand">🏪 SmartMart</div>
-        <div class="brand-subtitle">
-        Business Intelligence Platform
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+st.sidebar.caption(
+    "Business Intelligence & Resource Management"
+)
 
-    st.markdown("---")
+st.sidebar.divider()
 
-    st.markdown("### Navigation")
+st.sidebar.subheader("Navigation")
 
-    page = st.radio(
-        "",
-        [
-            "Overview",
-            "Resource Management",
-            "Financial Analysis",
-            "Balance Sheet",
-            "AI Forecast",
-            "Sustainability"
-        ],
-        label_visibility="collapsed"
-    )
+page = st.sidebar.radio(
+    "Select Section",
+    [
+        "Dashboard",
+        "Resource Consumption",
+        "Financial Analysis",
+        "Balance Sheet",
+        "AI Predictions",
+        "Sustainability"
+    ]
+)
 
-    st.markdown("---")
+st.sidebar.divider()
 
-    st.markdown("### Business Model")
+st.sidebar.subheader("Business Model")
 
-    st.info(
-        "Supermarket / Retail Business"
-    )
+st.sidebar.info(
+    "Supermarket / Retail Business"
+)
 
-    st.markdown("---")
+st.sidebar.divider()
 
-    st.caption("SmartMart AI/ML Minor Project")
-    st.caption("RGU • Artificial Intelligence & Data Science")
+st.sidebar.caption(
+    "AI & Data Science Minor Project"
+)
+
+st.sidebar.caption(
+    "Royal Global University"
+)
 
 
 # ============================================================
-# HEADER FUNCTION
+# COMMON DATA
 # ============================================================
 
-def page_header(title, subtitle):
+latest = df.iloc[-1]
 
-    st.markdown(
-        f"""
-        <div class="page-title">{title}</div>
-        <div class="page-subtitle">{subtitle}</div>
-        """,
-        unsafe_allow_html=True
+
+# ============================================================
+# DASHBOARD
+# ============================================================
+
+if page == "Dashboard":
+
+    st.title("🏪 SmartMart Business Dashboard")
+
+    st.write(
+        "AI/ML-powered business intelligence for financial performance, "
+        "resource consumption and sustainability."
     )
 
+    st.divider()
 
-# ============================================================
-# OVERVIEW
-# ============================================================
+    # --------------------------------------------------------
+    # KPI CARDS
+    # --------------------------------------------------------
 
-if page == "Overview":
-
-    page_header(
-        "Business Overview",
-        "Monitor financial performance, customers and operational resource efficiency."
-    )
-
-    latest = df.iloc[-1]
-
-    # KPI ROW
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.markdown(
-            f"""
-            <div class="kpi-card">
-                <div class="kpi-label">TOTAL REVENUE</div>
-                <div class="kpi-value">{money(latest['revenue'])}</div>
-                <div class="kpi-description">Latest business revenue</div>
-            </div>
-            """,
-            unsafe_allow_html=True
+
+        st.metric(
+            "Revenue",
+            money(latest["revenue"])
         )
 
     with col2:
-        st.markdown(
-            f"""
-            <div class="kpi-card">
-                <div class="kpi-label">NET PROFIT</div>
-                <div class="kpi-value">{money(latest['net_profit'])}</div>
-                <div class="kpi-description">Latest net profit</div>
-            </div>
-            """,
-            unsafe_allow_html=True
+
+        st.metric(
+            "Net Profit",
+            money(latest["net_profit"])
         )
 
     with col3:
-        st.markdown(
-            f"""
-            <div class="kpi-card">
-                <div class="kpi-label">CUSTOMERS</div>
-                <div class="kpi-value">{latest['customers']:,.0f}</div>
-                <div class="kpi-description">Latest customer volume</div>
-            </div>
-            """,
-            unsafe_allow_html=True
+
+        st.metric(
+            "Customers",
+            f"{latest['customers']:,.0f}"
         )
 
     with col4:
-        st.markdown(
-            f"""
-            <div class="kpi-card">
-                <div class="kpi-label">RESOURCE COST</div>
-                <div class="kpi-value">{money(latest['total_resource_cost'])}</div>
-                <div class="kpi-description">Operational resource cost</div>
-            </div>
-            """,
-            unsafe_allow_html=True
+
+        st.metric(
+            "Resource Cost",
+            money(latest["total_resource_cost"])
         )
 
     st.write("")
 
-    # PERFORMANCE
-    left, right = st.columns(2)
+    # --------------------------------------------------------
+    # REVENUE & PROFIT
+    # --------------------------------------------------------
 
-    with left:
-
-        st.markdown(
-            '<div class="section-card">',
-            unsafe_allow_html=True
-        )
-
-        st.subheader("Revenue Performance")
-
-        revenue_chart = df.set_index("date")[["revenue"]]
-
-        st.line_chart(revenue_chart)
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    with right:
-
-        st.markdown(
-            '<div class="section-card">',
-            unsafe_allow_html=True
-        )
-
-        st.subheader("Profit Performance")
-
-        profit_chart = df.set_index("date")[["net_profit"]]
-
-        st.line_chart(profit_chart)
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # BUSINESS HEALTH
-    st.subheader("Business Health")
-
-    col1, col2, col3 = st.columns(3)
-
-    profit_margin = (
-        latest["net_profit"] / latest["revenue"] * 100
-        if latest["revenue"] != 0 else 0
-    )
-
-    resource_percentage = latest["resource_cost_percentage"]
+    col1, col2 = st.columns(2)
 
     with col1:
 
-        st.markdown(
-            f"""
-            <div class="kpi-card">
-                <div class="kpi-label">NET PROFIT MARGIN</div>
-                <div class="kpi-value">{profit_margin:.2f}%</div>
-                <div class="kpi-description">
-                    Net profit as percentage of revenue
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        revenue_chart = px.line(
+            df,
+            x="date",
+            y="revenue",
+            title="Revenue Trend",
+            markers=True
+        )
+
+        revenue_chart.update_yaxes(
+            tickprefix=symbol
+        )
+
+        revenue_chart = apply_chart_theme(
+            revenue_chart
+        )
+
+        st.plotly_chart(
+            revenue_chart,
+            use_container_width=True
         )
 
     with col2:
 
-        st.markdown(
-            f"""
-            <div class="kpi-card">
-                <div class="kpi-label">RESOURCE COST / REVENUE</div>
-                <div class="kpi-value">{resource_percentage:.2f}%</div>
-                <div class="kpi-description">
-                    Resource cost contribution
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        profit_chart = px.line(
+            df,
+            x="date",
+            y="net_profit",
+            title="Net Profit Trend",
+            markers=True
+        )
+
+        profit_chart.update_yaxes(
+            tickprefix=symbol
+        )
+
+        profit_chart = apply_chart_theme(
+            profit_chart
+        )
+
+        st.plotly_chart(
+            profit_chart,
+            use_container_width=True
+        )
+
+    # --------------------------------------------------------
+    # BUSINESS HEALTH
+    # --------------------------------------------------------
+
+    st.subheader("Business Health")
+
+    profit_margin = (
+        latest["net_profit"]
+        / latest["revenue"]
+        * 100
+    )
+
+    resource_percentage = (
+        latest["resource_cost_percentage"]
+    )
+
+    electricity_per_customer = (
+        latest["electricity_per_customer"]
+    )
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+
+        st.metric(
+            "Net Profit Margin",
+            f"{profit_margin:.2f}%"
+        )
+
+    with col2:
+
+        st.metric(
+            "Resource Cost / Revenue",
+            f"{resource_percentage:.2f}%"
         )
 
     with col3:
 
-        st.markdown(
-            f"""
-            <div class="kpi-card">
-                <div class="kpi-label">ELECTRICITY / CUSTOMER</div>
-                <div class="kpi-value">
-                    {latest['electricity_per_customer']:.2f} kWh
-                </div>
-                <div class="kpi-description">
-                    Operational energy efficiency
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.metric(
+            "Electricity / Customer",
+            f"{electricity_per_customer:.2f} kWh"
         )
 
 
 # ============================================================
-# RESOURCE MANAGEMENT
+# RESOURCE CONSUMPTION
 # ============================================================
 
-elif page == "Resource Management":
+elif page == "Resource Consumption":
 
-    page_header(
-        "Resource Management",
-        "Track electricity, water, fuel and waste consumption across the supermarket."
+    st.title("⚡ Resource Consumption")
+
+    st.write(
+        "Monitor the supermarket's consumption of electricity, "
+        "water, fuel and waste."
     )
 
-    latest = df.iloc[-1]
+    st.divider()
+
+    # --------------------------------------------------------
+    # RESOURCE KPIs
+    # --------------------------------------------------------
 
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
+
         st.metric(
             "Electricity",
             f"{latest['electricity_kwh']:,.0f} kWh"
         )
 
     with col2:
+
         st.metric(
             "Water",
             f"{latest['water_m3']:,.0f} m³"
         )
 
     with col3:
+
         st.metric(
             "Fuel",
             f"{latest['fuel_liters']:,.0f} L"
         )
 
     with col4:
+
         st.metric(
             "Waste",
             f"{latest['waste_kg']:,.0f} kg"
@@ -536,69 +399,109 @@ elif page == "Resource Management":
 
     st.write("")
 
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        st.markdown(
-            '<div class="section-card">',
-            unsafe_allow_html=True
-        )
-
-        st.subheader("Electricity Consumption")
-
-        electricity_chart = df.set_index("date")[["electricity_kwh"]]
-
-        st.line_chart(electricity_chart)
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    with col2:
-
-        st.markdown(
-            '<div class="section-card">',
-            unsafe_allow_html=True
-        )
-
-        st.subheader("Water Consumption")
-
-        water_chart = df.set_index("date")[["water_m3"]]
-
-        st.line_chart(water_chart)
-
-        st.markdown("</div>", unsafe_allow_html=True)
+    # --------------------------------------------------------
+    # ELECTRICITY
+    # --------------------------------------------------------
 
     col1, col2 = st.columns(2)
 
     with col1:
 
-        st.markdown(
-            '<div class="section-card">',
-            unsafe_allow_html=True
+        fig = px.line(
+            df,
+            x="date",
+            y="electricity_kwh",
+            title="Electricity Consumption",
+            markers=True
         )
 
-        st.subheader("Fuel Consumption")
+        fig.update_yaxes(
+            title="Electricity (kWh)"
+        )
 
-        fuel_chart = df.set_index("date")[["fuel_liters"]]
+        fig = apply_chart_theme(fig)
 
-        st.line_chart(fuel_chart)
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
 
-        st.markdown("</div>", unsafe_allow_html=True)
+    # --------------------------------------------------------
+    # WATER
+    # --------------------------------------------------------
 
     with col2:
 
-        st.markdown(
-            '<div class="section-card">',
-            unsafe_allow_html=True
+        fig = px.line(
+            df,
+            x="date",
+            y="water_m3",
+            title="Water Consumption",
+            markers=True
         )
 
-        st.subheader("Waste Generation")
+        fig.update_yaxes(
+            title="Water (m³)"
+        )
 
-        waste_chart = df.set_index("date")[["waste_kg"]]
+        fig = apply_chart_theme(fig)
 
-        st.line_chart(waste_chart)
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
 
-        st.markdown("</div>", unsafe_allow_html=True)
+    # --------------------------------------------------------
+    # FUEL
+    # --------------------------------------------------------
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        fig = px.line(
+            df,
+            x="date",
+            y="fuel_liters",
+            title="Fuel Consumption",
+            markers=True
+        )
+
+        fig.update_yaxes(
+            title="Fuel (Liters)"
+        )
+
+        fig = apply_chart_theme(fig)
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+    # --------------------------------------------------------
+    # WASTE
+    # --------------------------------------------------------
+
+    with col2:
+
+        fig = px.line(
+            df,
+            x="date",
+            y="waste_kg",
+            title="Waste Generation",
+            markers=True
+        )
+
+        fig.update_yaxes(
+            title="Waste (kg)"
+        )
+
+        fig = apply_chart_theme(fig)
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
 
 
 # ============================================================
@@ -607,28 +510,37 @@ elif page == "Resource Management":
 
 elif page == "Financial Analysis":
 
-    page_header(
-        "Financial Analysis",
-        "Analyze revenue, profitability and operational resource costs."
+    st.title("💰 Financial Analysis")
+
+    st.write(
+        "Analyze revenue, operating profit, net profit and "
+        "resource-related business costs."
     )
 
-    latest = df.iloc[-1]
+    st.divider()
+
+    # --------------------------------------------------------
+    # FINANCIAL KPIs
+    # --------------------------------------------------------
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
+
         st.metric(
             "Revenue",
             money(latest["revenue"])
         )
 
     with col2:
+
         st.metric(
             "Operating Profit",
             money(latest["operating_profit"])
         )
 
     with col3:
+
         st.metric(
             "Net Profit",
             money(latest["net_profit"])
@@ -636,43 +548,70 @@ elif page == "Financial Analysis":
 
     st.write("")
 
-    col1, col2 = st.columns(2)
+    # --------------------------------------------------------
+    # REVENUE VS PROFIT
+    # --------------------------------------------------------
 
-    with col1:
-
-        st.markdown(
-            '<div class="section-card">',
-            unsafe_allow_html=True
-        )
-
-        st.subheader("Revenue vs Net Profit")
-
-        financial_chart = df.set_index("date")[
-            ["revenue", "net_profit"]
+    financial_long = df[
+        [
+            "date",
+            "revenue",
+            "operating_profit",
+            "net_profit"
         ]
+    ].melt(
+        id_vars="date",
+        var_name="Metric",
+        value_name="Amount"
+    )
 
-        st.line_chart(financial_chart)
+    fig = px.line(
+        financial_long,
+        x="date",
+        y="Amount",
+        color="Metric",
+        title="Revenue and Profit Performance",
+        markers=True
+    )
 
-        st.markdown("</div>", unsafe_allow_html=True)
+    fig.update_yaxes(
+        tickprefix=symbol
+    )
 
-    with col2:
+    fig = apply_chart_theme(fig)
 
-        st.markdown(
-            '<div class="section-card">',
-            unsafe_allow_html=True
-        )
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
 
-        st.subheader("Resource Cost Trend")
+    # --------------------------------------------------------
+    # RESOURCE COST TREND
+    # --------------------------------------------------------
 
-        resource_chart = df.set_index("date")[
-            ["total_resource_cost"]
-        ]
+    fig = px.area(
+        df,
+        x="date",
+        y="total_resource_cost",
+        title="Total Resource Cost Trend"
+    )
 
-        st.line_chart(resource_chart)
+    fig.update_yaxes(
+        tickprefix=symbol
+    )
 
-        st.markdown("</div>", unsafe_allow_html=True)
+    fig = apply_chart_theme(fig)
 
-    st.subheader("Cost Breakdown")
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+    # --------------------------------------------------------
+    # COST BREAKDOWN
+    # --------------------------------------------------------
+
+    st.subheader("Resource Cost Breakdown")
 
     cost_data = pd.DataFrame({
         "Cost Type": [
@@ -691,8 +630,22 @@ elif page == "Financial Analysis":
         ]
     })
 
-    st.bar_chart(
-        cost_data.set_index("Cost Type")
+    fig = px.bar(
+        cost_data,
+        x="Cost Type",
+        y="Cost",
+        title="Current Resource Cost Breakdown"
+    )
+
+    fig.update_yaxes(
+        tickprefix=symbol
+    )
+
+    fig = apply_chart_theme(fig)
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
     )
 
 
@@ -702,14 +655,19 @@ elif page == "Financial Analysis":
 
 elif page == "Balance Sheet":
 
-    page_header(
-        "Balance Sheet",
-        "Review assets, liabilities and equity for the supermarket business."
+    st.title("📑 Balance Sheet")
+
+    st.write(
+        "Financial position of the supermarket based on "
+        "assets, liabilities and equity."
     )
 
-    latest = df.iloc[-1]
+    st.divider()
 
-    # Assets
+    # --------------------------------------------------------
+    # ASSETS
+    # --------------------------------------------------------
+
     st.subheader("Assets")
 
     assets = pd.DataFrame({
@@ -722,19 +680,21 @@ elif page == "Balance Sheet":
             "Accounts Receivable"
         ],
         "Amount": [
-            latest["land_value"] * rate,
-            latest["building_value"] * rate,
-            latest["equipment_value"] * rate,
-            latest["inventory"] * rate,
-            latest["cash"] * rate,
-            latest["accounts_receivable"] * rate
+            latest["land_value"],
+            latest["building_value"],
+            latest["equipment_value"],
+            latest["inventory"],
+            latest["cash"],
+            latest["accounts_receivable"]
         ]
     })
 
     assets_display = assets.copy()
 
-    assets_display["Amount"] = assets_display["Amount"].apply(
-        lambda x: f"{symbol}{x:,.0f}"
+    assets_display["Amount"] = assets_display[
+        "Amount"
+    ].apply(
+        lambda x: money(x)
     )
 
     st.dataframe(
@@ -743,16 +703,17 @@ elif page == "Balance Sheet":
         hide_index=True
     )
 
-    total_assets = latest["total_assets"]
-
     st.metric(
         "Total Assets",
-        money(total_assets)
+        money(latest["total_assets"])
     )
 
     st.write("")
 
-    # Liabilities
+    # --------------------------------------------------------
+    # LIABILITIES
+    # --------------------------------------------------------
+
     st.subheader("Liabilities")
 
     liabilities = pd.DataFrame({
@@ -761,15 +722,17 @@ elif page == "Balance Sheet":
             "Accounts Payable"
         ],
         "Amount": [
-            latest["bank_loan"] * rate,
-            latest["accounts_payable"] * rate
+            latest["bank_loan"],
+            latest["accounts_payable"]
         ]
     })
 
     liabilities_display = liabilities.copy()
 
-    liabilities_display["Amount"] = liabilities_display["Amount"].apply(
-        lambda x: f"{symbol}{x:,.0f}"
+    liabilities_display["Amount"] = liabilities_display[
+        "Amount"
+    ].apply(
+        lambda x: money(x)
     )
 
     st.dataframe(
@@ -785,7 +748,10 @@ elif page == "Balance Sheet":
 
     st.write("")
 
-    # Equity
+    # --------------------------------------------------------
+    # EQUITY
+    # --------------------------------------------------------
+
     st.subheader("Equity")
 
     st.metric(
@@ -795,70 +761,79 @@ elif page == "Balance Sheet":
 
     st.divider()
 
-    # Accounting equation
+    # --------------------------------------------------------
+    # ACCOUNTING EQUATION
+    # --------------------------------------------------------
+
     st.subheader("Accounting Equation")
 
     st.info(
         "Assets = Liabilities + Equity"
     )
 
-    left, right = st.columns(2)
+    col1, col2 = st.columns(2)
 
-    with left:
+    with col1:
 
-        st.markdown(
-            f"""
-            <div class="kpi-card">
-                <div class="kpi-label">TOTAL ASSETS</div>
-                <div class="kpi-value">{money(latest['total_assets'])}</div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.metric(
+            "Total Assets",
+            money(latest["total_assets"])
         )
 
-    with right:
+    with col2:
 
-        st.markdown(
-            f"""
-            <div class="kpi-card">
-                <div class="kpi-label">LIABILITIES + EQUITY</div>
-                <div class="kpi-value">
-                    {money(latest['total_liabilities'] + latest['total_equity'])}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        liabilities_equity = (
+            latest["total_liabilities"]
+            + latest["total_equity"]
         )
 
-    st.success(
-        "✓ The balance sheet is balanced."
+        st.metric(
+            "Liabilities + Equity",
+            money(liabilities_equity)
+        )
+
+    difference = (
+        latest["total_assets"]
+        - liabilities_equity
     )
+
+    if abs(difference) < 1:
+
+        st.success(
+            "✓ Balance sheet is balanced."
+        )
+
+    else:
+
+        st.warning(
+            f"Balance sheet difference: {money(difference)}"
+        )
 
 
 # ============================================================
-# AI FORECAST
+# AI PREDICTIONS
 # ============================================================
 
-elif page == "AI Forecast":
+elif page == "AI Predictions":
 
-    page_header(
-        "AI Resource Forecast",
-        "Use trained machine-learning models to estimate future resource consumption."
+    st.title("🤖 AI Resource Consumption Prediction")
+
+    st.write(
+        "Use the trained machine-learning models to estimate "
+        "future electricity and water consumption."
     )
 
-    st.markdown(
-        '<span class="ai-badge">AI / MACHINE LEARNING</span>',
-        unsafe_allow_html=True
-    )
-
-    st.write("")
+    st.divider()
 
     st.info(
-        "The system uses trained Random Forest models to estimate "
-        "electricity and water consumption based on business operating conditions."
+        "The application uses trained Random Forest models "
+        "for resource consumption prediction."
     )
 
-    # Inputs
+    # --------------------------------------------------------
+    # INPUTS
+    # --------------------------------------------------------
+
     col1, col2 = st.columns(2)
 
     with col1:
@@ -925,12 +900,16 @@ elif page == "AI Forecast":
 
     st.write("")
 
+    # --------------------------------------------------------
+    # PREDICTION BUTTON
+    # --------------------------------------------------------
+
     if st.button(
-        "Run AI Prediction",
-        type="primary",
+        "🔮 Run AI Prediction",
         use_container_width=True
     ):
 
+        # Electricity model input
         electricity_input = pd.DataFrame({
             "customers": [customers],
             "employees": [employees],
@@ -941,6 +920,7 @@ elif page == "AI Forecast":
             "fuel_liters": [fuel]
         })
 
+        # Water model input
         water_input = pd.DataFrame({
             "customers": [customers],
             "employees": [employees],
@@ -950,13 +930,18 @@ elif page == "AI Forecast":
             "electricity_kwh": [electricity]
         })
 
-        predicted_electricity = electricity_model.predict(
-            electricity_input
-        )[0]
+        # Predictions
+        predicted_electricity = (
+            electricity_model.predict(
+                electricity_input
+            )[0]
+        )
 
-        predicted_water = water_model.predict(
-            water_input
-        )[0]
+        predicted_water = (
+            water_model.predict(
+                water_input
+            )[0]
+        )
 
         st.write("")
 
@@ -964,40 +949,25 @@ elif page == "AI Forecast":
 
         with col1:
 
-            st.markdown(
-                f"""
-                <div class="kpi-card">
-                    <div class="kpi-label">PREDICTED ELECTRICITY</div>
-                    <div class="kpi-value">
-                        {predicted_electricity:,.0f} kWh
-                    </div>
-                    <div class="kpi-description">
-                        Estimated future electricity consumption
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True
+            st.metric(
+                "Predicted Electricity",
+                f"{predicted_electricity:,.0f} kWh"
             )
 
         with col2:
 
-            st.markdown(
-                f"""
-                <div class="kpi-card">
-                    <div class="kpi-label">PREDICTED WATER</div>
-                    <div class="kpi-value">
-                        {predicted_water:,.0f} m³
-                    </div>
-                    <div class="kpi-description">
-                        Estimated future water consumption
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True
+            st.metric(
+                "Predicted Water",
+                f"{predicted_water:,.0f} m³"
             )
 
         st.success(
-            "Prediction completed successfully using the trained Random Forest models."
+            "Prediction completed successfully."
+        )
+
+        st.caption(
+            "Predictions are generated using the trained "
+            "Random Forest machine-learning models."
         )
 
 
@@ -1007,198 +977,150 @@ elif page == "AI Forecast":
 
 elif page == "Sustainability":
 
-    page_header(
-        "Sustainability & SDG Analysis",
-        "Measure resource efficiency and connect business operations with the UN Sustainable Development Goals."
+    st.title("🌱 Sustainability & SDG Analysis")
+
+    st.write(
+        "Measure resource efficiency and connect SmartMart's "
+        "operations with relevant Sustainable Development Goals."
     )
 
-    latest = df.iloc[-1]
+    st.divider()
 
-    electricity_efficiency = latest["electricity_per_customer"]
+    # --------------------------------------------------------
+    # EFFICIENCY KPIs
+    # --------------------------------------------------------
 
-    water_efficiency = latest["water_per_customer"]
+    electricity_efficiency = (
+        latest["electricity_per_customer"]
+    )
 
-    resource_cost = latest["resource_cost_percentage"]
+    water_efficiency = (
+        latest["water_per_customer"]
+    )
 
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-
-        st.markdown(
-            f"""
-            <div class="kpi-card">
-                <div class="kpi-label">ELECTRICITY / CUSTOMER</div>
-                <div class="kpi-value">
-                    {electricity_efficiency:.2f} kWh
-                </div>
-                <div class="kpi-description">
-                    Energy efficiency indicator
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    with col2:
-
-        st.markdown(
-            f"""
-            <div class="kpi-card">
-                <div class="kpi-label">WATER / CUSTOMER</div>
-                <div class="kpi-value">
-                    {water_efficiency:.3f} m³
-                </div>
-                <div class="kpi-description">
-                    Water efficiency indicator
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    with col3:
-
-        st.markdown(
-            f"""
-            <div class="kpi-card">
-                <div class="kpi-label">RESOURCE COST / REVENUE</div>
-                <div class="kpi-value">
-                    {resource_cost:.2f}%
-                </div>
-                <div class="kpi-description">
-                    Resource cost efficiency
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    st.write("")
-
-    st.subheader("Sustainable Development Goals")
+    resource_cost = (
+        latest["resource_cost_percentage"]
+    )
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
 
-        st.markdown(
-            """
-            <div class="sdg-card">
-                <div class="sdg-number">SDG 6</div>
-                <div class="sdg-title">
-                    Clean Water & Sanitation
-                </div>
-                <div class="sdg-text">
-                    Monitor and reduce water consumption
-                    through resource efficiency.
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.metric(
+            "Electricity / Customer",
+            f"{electricity_efficiency:.2f} kWh"
         )
 
     with col2:
 
-        st.markdown(
-            """
-            <div class="sdg-card">
-                <div class="sdg-number">SDG 7</div>
-                <div class="sdg-title">
-                    Affordable & Clean Energy
-                </div>
-                <div class="sdg-text">
-                    Monitor electricity consumption and
-                    improve energy efficiency.
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.metric(
+            "Water / Customer",
+            f"{water_efficiency:.3f} m³"
         )
 
     with col3:
 
-        st.markdown(
-            """
-            <div class="sdg-card">
-                <div class="sdg-number">SDG 9</div>
-                <div class="sdg-title">
-                    Industry & Innovation
-                </div>
-                <div class="sdg-text">
-                    Apply AI and machine learning to
-                    improve business resource management.
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.metric(
+            "Resource Cost / Revenue",
+            f"{resource_cost:.2f}%"
         )
 
     st.write("")
+
+    # --------------------------------------------------------
+    # SDGs
+    # --------------------------------------------------------
+
+    st.subheader(
+        "Relevant Sustainable Development Goals"
+    )
 
     col1, col2 = st.columns(2)
 
     with col1:
 
-        st.markdown(
-            """
-            <div class="sdg-card">
-                <div class="sdg-number">SDG 12</div>
-                <div class="sdg-title">
-                    Responsible Consumption
-                </div>
-                <div class="sdg-text">
-                    Monitor raw materials, packaging,
-                    waste and operational resources.
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.info(
+            "SDG 6 – Clean Water and Sanitation\n\n"
+            "Monitor and reduce water consumption "
+            "through improved resource efficiency."
+        )
+
+        st.info(
+            "SDG 7 – Affordable and Clean Energy\n\n"
+            "Monitor electricity consumption and "
+            "improve energy efficiency."
+        )
+
+        st.info(
+            "SDG 9 – Industry, Innovation and Infrastructure\n\n"
+            "Use AI and machine learning to improve "
+            "business resource management."
         )
 
     with col2:
 
-        st.markdown(
-            """
-            <div class="sdg-card">
-                <div class="sdg-number">SDG 13</div>
-                <div class="sdg-title">
-                    Climate Action
-                </div>
-                <div class="sdg-text">
-                    Reduce unnecessary energy and fuel
-                    consumption through better planning.
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.info(
+            "SDG 12 – Responsible Consumption and Production\n\n"
+            "Monitor raw materials, packaging, "
+            "waste and operational resources."
+        )
+
+        st.info(
+            "SDG 13 – Climate Action\n\n"
+            "Reduce unnecessary energy and fuel "
+            "consumption through better planning."
         )
 
     st.write("")
 
-    st.subheader("Resource Consumption Trends")
+    # --------------------------------------------------------
+    # SUSTAINABILITY CHART
+    # --------------------------------------------------------
 
-    sustainability_chart = df.set_index("date")[
+    st.subheader(
+        "Resource Consumption Trends"
+    )
+
+    sustainability_data = df[
         [
+            "date",
             "electricity_kwh",
             "water_m3",
             "waste_kg"
         ]
-    ]
+    ].melt(
+        id_vars="date",
+        var_name="Resource",
+        value_name="Consumption"
+    )
 
-    st.line_chart(sustainability_chart)
+    fig = px.line(
+        sustainability_data,
+        x="date",
+        y="Consumption",
+        color="Resource",
+        title="Electricity, Water and Waste Trends",
+        markers=True
+    )
+
+    fig = apply_chart_theme(fig)
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
 
 
 # ============================================================
 # FOOTER
 # ============================================================
 
-st.markdown(
-    """
-    <div class="footer">
-        SmartMart AI/ML • Business Resource & Sustainability Management
-        <br>
-        Developed as an AI & Data Science Minor Project
-    </div>
-    """,
-    unsafe_allow_html=True
+st.sidebar.divider()
+
+st.sidebar.caption(
+    "SmartMart AI/ML Minor Project"
+)
+
+st.sidebar.caption(
+    "Business Resource & Sustainability Management"
 )
