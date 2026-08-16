@@ -1018,7 +1018,7 @@ st.sidebar.caption("SmartMart AI/ML Minor Project")
 st.sidebar.caption("Business Resource & Sustainability Management")
 
 
-path = Path("/mnt/data/app.py")
+path = path("/mnt/data/app.py")
 path.write_text(app_code, encoding="utf-8")
 print(f"Created: {path}")
 print(f"Lines: {len(app_code.splitlines())}")
