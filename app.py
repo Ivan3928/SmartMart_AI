@@ -51,9 +51,7 @@ WATER_MODEL_FILE = os.path.join(
 def load_data():
 
     if not os.path.exists(DATA_FILE):
-        st.error(
-            f"Data file not found:\n{DATA_FILE}"
-        )
+        st.error(f"Data file not found: {DATA_FILE}")
         st.stop()
 
     data = pd.read_csv(DATA_FILE)
@@ -76,33 +74,25 @@ def load_models():
 
     if not os.path.exists(ELECTRICITY_MODEL_FILE):
         st.error(
-            "Electricity model not found:\n"
+            f"Electricity model not found: "
             f"{ELECTRICITY_MODEL_FILE}"
         )
         st.stop()
 
     if not os.path.exists(WATER_MODEL_FILE):
         st.error(
-            "Water model not found:\n"
+            f"Water model not found: "
             f"{WATER_MODEL_FILE}"
         )
         st.stop()
 
-    try:
-        electricity_model = joblib.load(
-            ELECTRICITY_MODEL_FILE
-        )
+    electricity_model = joblib.load(
+        ELECTRICITY_MODEL_FILE
+    )
 
-        water_model = joblib.load(
-            WATER_MODEL_FILE
-        )
-
-    except Exception as e:
-        st.error(
-            "Error loading machine-learning models."
-        )
-        st.exception(e)
-        st.stop()
+    water_model = joblib.load(
+        WATER_MODEL_FILE
+    )
 
     return electricity_model, water_model
 
@@ -115,22 +105,11 @@ df = load_data()
 
 electricity_model, water_model = load_models()
 
-
-if df.empty:
-    st.error("The SmartMart dataset is empty.")
-    st.stop()
-
-
-# Sort data by date if date exists
-if "date" in df.columns:
-    df = df.sort_values("date").reset_index(drop=True)
-
-
 latest = df.iloc[-1]
 
 
 # ============================================================
-# CURRENCY SETTINGS
+# CURRENCY
 # ============================================================
 
 st.sidebar.title("🏪 SmartMart")
@@ -157,6 +136,7 @@ currency_symbols = {
 }
 
 rate = currency_rates[currency]
+
 symbol = currency_symbols[currency]
 
 
@@ -212,7 +192,7 @@ st.markdown(
         border: 1px solid #D1D5DB;
         border-radius: 12px;
         padding: 15px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
 
     [data-testid="stMetricLabel"] {
@@ -418,24 +398,28 @@ if page == "📊 Dashboard":
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
+
         st.metric(
             "💰 Revenue",
             money(latest["revenue"])
         )
 
     with col2:
+
         st.metric(
             "📈 Net Profit",
             money(latest["net_profit"])
         )
 
     with col3:
+
         st.metric(
             "👥 Customers",
             f"{latest['customers']:,.0f}"
         )
 
     with col4:
+
         st.metric(
             "⚡ Resource Cost",
             money(latest["total_resource_cost"])
@@ -517,7 +501,7 @@ elif page == "⚡ Resource Consumption":
     st.divider()
 
     # ========================================================
-    # RESOURCE OVERVIEW
+    # OVERVIEW
     # ========================================================
 
     if resource_category == "📊 Overview":
@@ -527,24 +511,28 @@ elif page == "⚡ Resource Consumption":
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
+
             st.metric(
                 "⚡ Electricity",
                 f"{latest['electricity_kwh']:,.0f} kWh"
             )
 
         with col2:
+
             st.metric(
                 "💧 Water",
                 f"{latest['water_m3']:,.0f} m³"
             )
 
         with col3:
+
             st.metric(
                 "⛽ Fuel",
                 f"{latest['fuel_liters']:,.0f} L"
             )
 
         with col4:
+
             st.metric(
                 "♻️ Waste",
                 f"{latest['waste_kg']:,.0f} kg"
@@ -591,6 +579,7 @@ elif page == "⚡ Resource Consumption":
             use_container_width=True
         )
 
+
     # ========================================================
     # ELECTRICITY
     # ========================================================
@@ -602,6 +591,7 @@ elif page == "⚡ Resource Consumption":
         col1, col2, col3 = st.columns(3)
 
         with col1:
+
             st.metric(
                 "Current",
                 f"{latest['electricity_kwh']:,.0f} kWh"
@@ -651,6 +641,7 @@ elif page == "⚡ Resource Consumption":
             use_container_width=True
         )
 
+
     # ========================================================
     # WATER
     # ========================================================
@@ -662,6 +653,7 @@ elif page == "⚡ Resource Consumption":
         col1, col2, col3 = st.columns(3)
 
         with col1:
+
             st.metric(
                 "Current",
                 f"{latest['water_m3']:,.0f} m³"
@@ -711,6 +703,7 @@ elif page == "⚡ Resource Consumption":
             use_container_width=True
         )
 
+
     # ========================================================
     # FUEL
     # ========================================================
@@ -722,6 +715,7 @@ elif page == "⚡ Resource Consumption":
         col1, col2, col3 = st.columns(3)
 
         with col1:
+
             st.metric(
                 "Current",
                 f"{latest['fuel_liters']:,.0f} L"
@@ -771,6 +765,7 @@ elif page == "⚡ Resource Consumption":
             use_container_width=True
         )
 
+
     # ========================================================
     # WASTE
     # ========================================================
@@ -782,6 +777,7 @@ elif page == "⚡ Resource Consumption":
         col1, col2, col3 = st.columns(3)
 
         with col1:
+
             st.metric(
                 "Current",
                 f"{latest['waste_kg']:,.0f} kg"
@@ -847,18 +843,21 @@ elif page == "💰 Financial Analysis":
     col1, col2, col3 = st.columns(3)
 
     with col1:
+
         st.metric(
             "💰 Revenue",
             money(latest["revenue"])
         )
 
     with col2:
+
         st.metric(
             "📊 Operating Profit",
             money(latest["operating_profit"])
         )
 
     with col3:
+
         st.metric(
             "📈 Net Profit",
             money(latest["net_profit"])
@@ -1247,10 +1246,6 @@ elif page == "🤖 AI Predictions":
 
         try:
 
-            # ------------------------------------------------
-            # ELECTRICITY MODEL INPUT
-            # ------------------------------------------------
-
             electricity_input = pd.DataFrame({
 
                 "customers": [customers],
@@ -1268,9 +1263,6 @@ elif page == "🤖 AI Predictions":
                 "fuel_liters": [fuel]
             })
 
-            # ------------------------------------------------
-            # WATER MODEL INPUT
-            # ------------------------------------------------
 
             water_input = pd.DataFrame({
 
@@ -1287,9 +1279,6 @@ elif page == "🤖 AI Predictions":
                 "electricity_kwh": [electricity]
             })
 
-            # ------------------------------------------------
-            # ELECTRICITY PREDICTION
-            # ------------------------------------------------
 
             predicted_electricity = (
                 electricity_model.predict(
@@ -1297,9 +1286,6 @@ elif page == "🤖 AI Predictions":
                 )[0]
             )
 
-            # ------------------------------------------------
-            # WATER PREDICTION
-            # ------------------------------------------------
 
             predicted_water = (
                 water_model.predict(
@@ -1307,13 +1293,8 @@ elif page == "🤖 AI Predictions":
                 )[0]
             )
 
-            # ------------------------------------------------
-            # RESULTS
-            # ------------------------------------------------
 
-            st.subheader(
-                "🔮 Prediction Results"
-            )
+            st.subheader("🔮 Prediction Results")
 
             result1, result2 = st.columns(2)
 
@@ -1339,9 +1320,7 @@ elif page == "🤖 AI Predictions":
         except Exception as e:
 
             st.error(
-                "The prediction could not be completed. "
-                "Please verify that the input columns match "
-                "the features used when training the models."
+                "The prediction could not be completed."
             )
 
             st.exception(e)
