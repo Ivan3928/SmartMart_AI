@@ -4,11 +4,9 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 
-============================================================
 
-PAGE CONFIGURATION
+#PAGE CONFIGURATION
 
-============================================================
 
 st.set_page_config(
 page_title="SmartMart Resource Manager",
@@ -17,11 +15,9 @@ layout="wide",
 initial_sidebar_state="expanded"
 )
 
-============================================================
 
-PROJECT PATHS
+#PROJECT PATHS
 
-============================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(file))
 
@@ -44,11 +40,9 @@ BASE_DIR,
 "water_model.pkl"
 )
 
-============================================================
 
-LOAD DATA
+#LOAD DATA
 
-============================================================
 
 @st.cache_data
 def load_data():
@@ -67,11 +61,8 @@ if "date" in data.columns:
 
 return data
 
-============================================================
+#LOAD MACHINE LEARNING MODELS
 
-LOAD MACHINE LEARNING MODELS
-
-============================================================
 
 @st.cache_resource
 def load_models():
@@ -100,11 +91,7 @@ water_model = joblib.load(
 
 return electricity_model, water_model
 
-============================================================
-
-INITIALIZE DATA
-
-============================================================
+#INITIALIZE DATA
 
 df = load_data()
 
@@ -112,11 +99,7 @@ electricity_model, water_model = load_models()
 
 latest = df.iloc[-1]
 
-============================================================
-
-CURRENCY
-
-============================================================
+#CURRENCY
 
 st.sidebar.title("🏪 SmartMart")
 
@@ -157,11 +140,9 @@ try:
 except (ValueError, TypeError):
     return f"{symbol}0"
 
-============================================================
 
-PROFESSIONAL UI STYLE
+# UI STYLE
 
-============================================================
 
 st.markdown(
 """
@@ -228,11 +209,7 @@ unsafe_allow_html=True
 
 )
 
-============================================================
-
-PLOTLY THEME
-
-============================================================
+#PLOTLY THEME
 
 def apply_chart_theme(fig):
 
@@ -344,11 +321,7 @@ page = st.sidebar.radio(
 label_visibility="collapsed"
 )
 
-============================================================
-
-RESOURCE CONSUMPTION SUB-MENU
-
-============================================================
+#RESOURCE CONSUMPTION SUB-MENU
 
 resource_category = "📊 Overview"
 
@@ -371,12 +344,8 @@ resource_category = st.sidebar.radio(
     ],
     label_visibility="collapsed"
 )
+#PAGE HEADER
 
-============================================================
-
-PAGE HEADER
-
-============================================================
 
 st.title(
 "🏪 SmartMart Resource & Financial Management System"
@@ -390,11 +359,8 @@ and sustainability of a supermarket.
 """
 )
 
-============================================================
+#DASHBOARD
 
-DASHBOARD
-
-============================================================
 
 if page == "📊 Dashboard":
 
@@ -404,9 +370,7 @@ st.write(
     "Overview of SmartMart's latest business performance."
 )
 
-# --------------------------------------------------------
 # KPI CARDS
-# --------------------------------------------------------
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -440,9 +404,9 @@ with col4:
 
 st.divider()
 
-# --------------------------------------------------------
+
 # REVENUE TREND
-# --------------------------------------------------------
+
 
 st.subheader("📈 Revenue Trend")
 
@@ -469,9 +433,9 @@ st.plotly_chart(
     use_container_width=True
 )
 
-# --------------------------------------------------------
+
 # PROFIT TREND
-# --------------------------------------------------------
+
 
 st.subheader("📈 Net Profit Trend")
 
@@ -498,11 +462,7 @@ st.plotly_chart(
     use_container_width=True
 )
 
-============================================================
-
-RESOURCE CONSUMPTION
-
-============================================================
+#RESOURCE CONSUMPTION
 
 elif page == "⚡ Resource Consumption":
 
@@ -514,9 +474,8 @@ st.write(
 
 st.divider()
 
-# ========================================================
 # OVERVIEW
-# ========================================================
+
 
 if resource_category == "📊 Overview":
 
@@ -594,9 +553,9 @@ if resource_category == "📊 Overview":
     )
 
 
-# ========================================================
+
 # ELECTRICITY
-# ========================================================
+
 
 elif resource_category == "⚡ Electricity":
 
@@ -656,9 +615,9 @@ elif resource_category == "⚡ Electricity":
     )
 
 
-# ========================================================
+
 # WATER
-# ========================================================
+
 
 elif resource_category == "💧 Water":
 
@@ -717,10 +676,7 @@ elif resource_category == "💧 Water":
         use_container_width=True
     )
 
-
-# ========================================================
 # FUEL
-# ========================================================
 
 elif resource_category == "⛽ Fuel":
 
@@ -779,10 +735,7 @@ elif resource_category == "⛽ Fuel":
         use_container_width=True
     )
 
-
-# ========================================================
 # WASTE
-# ========================================================
 
 elif resource_category == "♻️ Waste":
 
@@ -841,19 +794,14 @@ elif resource_category == "♻️ Waste":
         use_container_width=True
     )
 
-============================================================
 
-FINANCIAL ANALYSIS
-
-============================================================
+#FINANCIAL ANALYSIS
 
 elif page == "💰 Financial Analysis":
 
 st.header("💰 Financial Analysis")
 
-# --------------------------------------------------------
 # FINANCIAL KPI
-# --------------------------------------------------------
 
 col1, col2, col3 = st.columns(3)
 
@@ -880,9 +828,7 @@ with col3:
 
 st.divider()
 
-# --------------------------------------------------------
 # REVENUE VS PROFIT
-# --------------------------------------------------------
 
 st.subheader("📊 Revenue vs Net Profit")
 
@@ -922,9 +868,8 @@ st.plotly_chart(
     use_container_width=True
 )
 
-# --------------------------------------------------------
 # RESOURCE COST
-# --------------------------------------------------------
+
 
 st.subheader("💸 Resource Cost Trend")
 
@@ -951,9 +896,7 @@ st.plotly_chart(
     use_container_width=True
 )
 
-# --------------------------------------------------------
 # COST BREAKDOWN
-# --------------------------------------------------------
 
 st.subheader("📊 Current Cost Breakdown")
 
@@ -999,21 +942,15 @@ st.plotly_chart(
     use_container_width=True
 )
 
-============================================================
+#BALANCE SHEET
 
-BALANCE SHEET
-
-============================================================
 
 elif page == "📑 Balance Sheet":
 
 st.header("📑 Balance Sheet")
 
-# --------------------------------------------------------
-# ASSETS
-# --------------------------------------------------------
 
-st.subheader("🏢 Assets")
+# ASSETS
 
 assets = pd.DataFrame({
 
@@ -1055,9 +992,8 @@ st.metric(
 
 st.divider()
 
-# --------------------------------------------------------
 # LIABILITIES
-# --------------------------------------------------------
+
 
 st.subheader("🏦 Liabilities")
 
@@ -1093,9 +1029,7 @@ st.metric(
 
 st.divider()
 
-# --------------------------------------------------------
 # EQUITY
-# --------------------------------------------------------
 
 st.subheader("📊 Equity")
 
@@ -1106,9 +1040,8 @@ st.metric(
 
 st.divider()
 
-# --------------------------------------------------------
+
 # ACCOUNTING EQUATION
-# --------------------------------------------------------
 
 st.subheader("🧮 Accounting Equation")
 
@@ -1154,11 +1087,8 @@ else:
         f"Difference: {money(difference)}"
     )
 
-============================================================
 
-AI PREDICTIONS
-
-============================================================
+#AI PREDICTIONS
 
 elif page == "🤖 AI Predictions":
 
@@ -1176,9 +1106,7 @@ st.write(
 
 st.divider()
 
-# --------------------------------------------------------
 # INPUT SECTION
-# --------------------------------------------------------
 
 col1, col2 = st.columns(2)
 
@@ -1252,9 +1180,7 @@ with col2:
 
 st.divider()
 
-# --------------------------------------------------------
 # PREDICT
-# --------------------------------------------------------
 
 if st.button(
     "🔮 Predict Resource Consumption",
@@ -1342,11 +1268,8 @@ if st.button(
 
         st.exception(e)
 
-============================================================
 
-SUSTAINABILITY
-
-============================================================
+#SUSTAINABILITY
 
 elif page == "🌱 Sustainability":
 
@@ -1354,9 +1277,8 @@ st.header(
     "🌱 Sustainability & SDG Analysis"
 )
 
-# --------------------------------------------------------
 # EFFICIENCY METRICS
-# --------------------------------------------------------
+
 
 electricity_efficiency = (
     latest["electricity_per_customer"]
@@ -1395,9 +1317,7 @@ with col3:
 
 st.divider()
 
-# --------------------------------------------------------
 # SDG ANALYSIS
-# --------------------------------------------------------
 
 st.subheader(
     "🌍 Relevant Sustainable Development Goals"
@@ -1450,9 +1370,7 @@ with col2:
         """
     )
 
-# --------------------------------------------------------
 # SUSTAINABILITY CHART
-# --------------------------------------------------------
 
 st.subheader(
     "📈 Resource Consumption Trends"
@@ -1494,11 +1412,8 @@ st.plotly_chart(
     use_container_width=True
 )
 
-============================================================
+#FOOTER
 
-FOOTER
-
-============================================================
 
 st.sidebar.divider()
 
